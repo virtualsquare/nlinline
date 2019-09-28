@@ -1,0 +1,124 @@
+# <!-- -->
+
+<!--
+.\" Copyright (C) 2019 VirtualSquare. Project Leader: Renzo Davoli
+.\"
+.\" This is free documentation; you can redistribute it and/or
+.\" modify it under the terms of the GNU General Public License,
+.\" as published by the Free Software Foundation, either version 2
+.\" of the License, or (at your option) any later version.
+.\"
+.\" The GNU General Public License's references to "object code"
+.\" and "executables" are to be interpreted as the output of any
+.\" document formatting or typesetting system, including
+.\" intermediate and printed output.
+.\"
+.\" This manual is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\"
+.\" You should have received a copy of the GNU General Public
+.\" License along with this manual; if not, write to the Free
+.\" Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston,
+.\" MA 02110-1301 USA.
+.\"
+-->
+
+## NAME
+
+nlinline_if_nametoindex, nlinline_linksetupdown, nlinline_ipaddr_add, nlinline_ipaddr_del, nlinline_iproute_add, nlinline_iproute_del - configure network interfaces
+
+## SYNOPSIS
+`#include <nlinline.h>`
+
+`int nlinline_if_nametoindex(const char *`_ifname_`);`
+
+`int nlinline_linksetupdown(unsigned int ` _ifindex_`, int ` _updown_`);`
+
+`int nlinline_ipaddr_add(int ` _family_`, void *`_addr_`, int ` _prefixlen_`, int ` _ifindex_`);`
+
+`int nlinline_ipaddr_del(int ` _family_`, void *`_addr_`, int ` _prefixlen_`, int ` _ifindex_`);`
+
+`int nlinline_iproute_add(int ` _family_`, void *`_dst_addr_`, int ` _dst_prefixlen_`, void *`_gw_addr_`);`
+
+`int nlinline_iproute_del(int ` _family_`, void *`_dst_addr_`, int ` _dst_prefixlen_`, void *`_gw_addr_`);`
+
+## DESCRIPTION
+
+NLINLINE (netlink inline) is a *library* of inline functions providing C programmers with very handy functions to configure network stacks. NLINLINE is entirely implemented in a header file, nlinline.h.
+
+  * `nlinline_if_nametoindex`:
+    This function returns the index of the network interface whose name is `ifname`.
+
+  * `nlinline_linksetupdown`:
+    This function turns the interface `ifindex` up (`updown == 1`) or down (`updown == 0`).
+
+  * `nlinline_ipaddr_add`:
+    This function adds an IP address to the interface `ifindex`. It supports IPv4 (`family == AF_INET`) and IPv6 `(family == AF_INET6)`.
+
+  * `nlinline_ipaddr_del`:
+    This function removes the IP address from the interface `ifindex`. It supports IPv4 (`family == AF_INET`) and IPv6 `(family == AF_INET6)`.
+
+  * `nlinline_iproute_add`:
+    This function adds a static route to `dst_addr`/`dst_prefixlen` network through the gateway `gw_addr`. If `dst_addr == NULL` it adds a default route.
+
+  * `nlinline_iproute_del`:
+    This function removes the static route to `dst_addr`/`dst_prefixlen` network through the gateway `gw_addr`.
+
+IP addresses are `void *` arguments, any sequence of 4 or 16 bytes (in network byte order) is a legal IPv4 or IPv6 address respectively.
+
+`nlinline` functions do not add dependencies at run-time. This is useful for security critical applications 
+(like PAM modules)
+These inline functions use netlink only, they do not depend on the obsolete netdevice (ioctl) API.
+Only the code of referenced inline functions enters in the object and executable code.
+
+## RETURN VALUE
+
+`nlinline_if_nametoindex` returns the interface index or -1 if
+an error occurred (in which case, errno is set appropriately) $
+
+all the other functions return zero in case of success. On error, -1 is returned, and  errno  is$
+set appropriately.$
+
+## EXAMPLE
+```C
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <nlinline.h>
+
+int main(int argc, char *argv[]) {
+  uint8_t ipv4addr[] = {192,168,2,2};
+  uint8_t ipv4gw[] = {192,168,2,1};
+  uint8_t ipv6addr[16] = {0x20, 0x01, 0x07, 0x60, [15] = 0x02};
+  uint8_t ipv6gw[16] = {0x20, 0x01, 0x07, 0x60, [15] = 0x01};
+
+  int ifindex = nlinline_if_nametoindex(argv[1]);
+  if (ifindex > 0)
+    printf("%d\n", ifindex);
+  else {
+    perror("nametoindex");
+    return 1;
+  }
+
+  if (nlinline_linksetupdown(ifindex, 1) < 0)
+    perror("link up");
+  if (nlinline_ipaddr_add(AF_INET, ipv4addr, 24, ifindex) < 0)
+    perror("addr ipv4");
+  if (nlinline_iproute_add(AF_INET, NULL, 0, ipv4gw) < 0)
+    perror("addr ipv6");
+  if (nlinline_ipaddr_add(AF_INET6, ipv6addr, 64, ifindex) < 0)
+    perror("route ipv4");
+  if (nlinline_iproute_add(AF_INET6, NULL, 0, ipv6gw) < 0)
+    perror("route ipv6");
+  return 0;
+}
+```
+
+This program takes the name of an interface from the command line. It turns that interface up and
+sets the interface IPv4 and IPv6 addresses and default routes.
+
+## AUTHOR
+VirtualSquare. Project leader: Renzo Davoli
+
