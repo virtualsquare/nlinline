@@ -65,3 +65,20 @@ int main(int argc, char *argv[]) {
 This program takes the name of an interface from the command line. It turns that interface up and
 sets the interface IPv4 and IPv6 addresses and default routes.
 
+## how to install nlinline
+
+Just put nlinline.h where you need it and that's all.
+```
+cp nlinline.h /usr/local/include
+```
+or
+```
+cp nlinline.h /usr/include
+```
+
+In case you are lazy and you like standard install methods and tools, there is a trivial CMake support. 
+The standard cmake install sequence applies:
+```
+$ cmake .
+$ sudo make install
+```
