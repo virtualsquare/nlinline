@@ -10,7 +10,7 @@ ifdef RONNOK
 # run ronn
 		$(RONN) -r ${RONN_ARGS} --pipe $< >> $@
 # delete useless trailing "" in .TH
-		sed -i '/^\.TH /s/""$$//' $@
+		sed -i '/^\.TH /s/ ""$$//' $@
 else
 		echo "${RONN} is not available. Manpage $@ cannot be updated" >/dev/stderr >&2
 endif
