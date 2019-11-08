@@ -8,14 +8,14 @@
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
- * along with this program; If not, see <http://www.gnu.org/licenses/>. 
+ * along with this program; If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -42,6 +42,21 @@ static inline int nlinline_ipaddr_del(int family, void *addr, int prefixlen, int
 static inline int nlinline_iproute_add(int family, void *dst_addr, int dst_prefixlen, void *gw_addr);
 static inline int nlinline_iproute_del(int family, void *dst_addr, int dst_prefixlen, void *gw_addr);
 
+#ifndef __NLINLINE_PLUSTYPE
+#define __PLUSARG
+#define __PLUSF
+#define __PLUS
+#define __nlinline_if_nametoindex nlinline_if_nametoindex
+#define __nlinline_linksetupdown nlinline_linksetupdown
+#define __nlinline_ipaddr_add nlinline_ipaddr_add
+#define __nlinline_ipaddr_del nlinline_ipaddr_del
+#define __nlinline_iproute_add nlinline_iproute_add
+#define __nlinline_iproute_del nlinline_iproute_del
+#else
+#define __PLUSARG __NLINLINE_PLUSTYPE *__stack,
+#define __PLUSF __stack->
+#define __PLUS __stack,
+#endif
 
 /**************************
  * Implementation
@@ -52,10 +67,11 @@ static inline int nlinline_family2addrlen(int family) {
 		case AF_INET: return 4;
 		case AF_INET6: return 16;
 		default: return 0;
+		__default: return 0;
 	}
 }
 
-static inline int __nlinline_geterror(int fd) {
+static inline int __nlinline_geterror(__PLUSARG int fd) {
 	struct {
 		struct nlmsghdr h;
 		union {
@@ -63,7 +79,7 @@ static inline int __nlinline_geterror(int fd) {
 			struct ifinfomsg i;
 		};
 	} msg;
-	int replylen = recv(fd, &msg, sizeof(msg), 0);
+	int replylen = __PLUSF recv(fd, &msg, sizeof(msg), 0);
 	if (replylen < 0)
 		return -1;
 	if (replylen <= sizeof(msg.h))
@@ -75,23 +91,29 @@ static inline int __nlinline_geterror(int fd) {
 	}
 }
 
-static inline int __nlinline_conversation(void *msg) {
+static inline int __nlinline_conversation(__PLUSARG void *msg) {
 	struct nlmsghdr *nlmsg = msg;
 	struct sockaddr_nl sanl = {AF_NETLINK, 0, 0, 0};
   int ret_value;
-  int fd = socket(AF_NETLINK, SOCK_RAW | SOCK_CLOEXEC, NETLINK_ROUTE);
+  int fd;
+#ifdef __NLINLINE_PLUSTYPE
+	if (__PLUSF msocket)
+		fd = __PLUSF msocket(__PLUSF mstack, AF_NETLINK, SOCK_RAW | SOCK_CLOEXEC, NETLINK_ROUTE);
+	else
+#endif
+		fd	= __PLUSF socket(AF_NETLINK, SOCK_RAW | SOCK_CLOEXEC, NETLINK_ROUTE);
   if (fd < 0)
     return fd;
-  if (bind(fd, (struct sockaddr *) &sanl, sizeof(struct sockaddr_nl)) < 0)
-    return close(fd), -1;
-  if (send(fd, msg, nlmsg->nlmsg_len, 0) < 0)
-    return close(fd), -1;
-  ret_value = __nlinline_geterror(fd);
-  close(fd);
+  if (__PLUSF bind(fd, (struct sockaddr *) &sanl, sizeof(struct sockaddr_nl)) < 0)
+    return __PLUSF close(fd), -1;
+  if (__PLUSF send(fd, msg, nlmsg->nlmsg_len, 0) < 0)
+    return __PLUSF close(fd), -1;
+  ret_value = __nlinline_geterror(__PLUS fd);
+  __PLUSF close(fd);
   return ret_value;
 }
 
-static inline int nlinline_if_nametoindex(const char *ifname) {
+static inline int __nlinline_if_nametoindex(__PLUSARG const char *ifname) {
 	struct {
     struct nlmsghdr h;
     struct ifinfomsg i;
@@ -107,10 +129,10 @@ static inline int nlinline_if_nametoindex(const char *ifname) {
 	int namelen = snprintf(msg.ifname, IFNAMSIZ, "%s", ifname);
 	msg.a.nla_len = sizeof(msg.a) + namelen + 1;
 	msg.h.nlmsg_len += (msg.a.nla_len + 3) & ~3;
-	return __nlinline_conversation(&msg);
+	return __nlinline_conversation(__PLUS &msg);
 }
 
-static inline int nlinline_linksetupdown(unsigned int ifindex, int updown) {
+static inline int __nlinline_linksetupdown(__PLUSARG unsigned int ifindex, int updown) {
 	struct {
 		struct nlmsghdr h;
 		struct ifinfomsg i;
@@ -122,7 +144,7 @@ static inline int nlinline_linksetupdown(unsigned int ifindex, int updown) {
 		.i.ifi_index = ifindex,
 		.i.ifi_flags = (updown) ? IFF_UP : 0,
 		.i.ifi_change=IFF_UP };
-	return __nlinline_conversation(&msg);
+	return __nlinline_conversation(__PLUS &msg);
 }
 
 struct __nlinline_ipv4addr {
@@ -143,7 +165,8 @@ struct __nlinline_ipv6attr {
 	struct __nlinline_ipv6addr addr;
 };
 
-static inline int __nlinline_ipaddr(int request, int xflags, int family, void *addr, int prefixlen, int ifindex) {
+static inline int __nlinline_ipaddr(__PLUSARG
+		int request, int xflags, int family, void *addr, int prefixlen, int ifindex) {
 	int addrlen = nlinline_family2addrlen(family);
 	if (addrlen == 0)
 		return errno = EINVAL, -1;
@@ -177,19 +200,24 @@ static inline int __nlinline_ipaddr(int request, int xflags, int family, void *a
 			msg.a6[0].addr = msg.a6[1].addr = *((struct __nlinline_ipv6addr *) addr);
 			msg.h.nlmsg_len += 2 * sizeof(msg.a6[0]);
 		}
-		return __nlinline_conversation(&msg);
+		return __nlinline_conversation(__PLUS &msg);
 	}
 }
 
-static inline int nlinline_ipaddr_add(int family, void *addr, int prefixlen, int ifindex) {
-	return __nlinline_ipaddr(RTM_NEWADDR, NLM_F_EXCL | NLM_F_CREATE, family, addr, prefixlen, ifindex);
+static inline int __nlinline_ipaddr_add(__PLUSARG
+		int family, void *addr, int prefixlen, int ifindex) {
+	return __nlinline_ipaddr(__PLUS
+			RTM_NEWADDR, NLM_F_EXCL | NLM_F_CREATE, family, addr, prefixlen, ifindex);
 }
 
-static inline int nlinline_ipaddr_del(int family, void *addr, int prefixlen, int ifindex) {
-	return __nlinline_ipaddr(RTM_DELADDR, 0, family, addr, prefixlen, ifindex);
+static inline int __nlinline_ipaddr_del(__PLUSARG
+		int family, void *addr, int prefixlen, int ifindex) {
+	return __nlinline_ipaddr(__PLUS
+			RTM_DELADDR, 0, family, addr, prefixlen, ifindex);
 }
 
-static inline int __nlinline_iproute(int request, int xflags, int family, void *dst_addr, int dst_prefixlen, void *gw_addr) {
+static inline int __nlinline_iproute(__PLUSARG
+		int request, int xflags, int family, void *dst_addr, int dst_prefixlen, void *gw_addr) {
 	int addrlen = nlinline_family2addrlen(family);
   if (addrlen == 0)
     return errno = EINVAL, -1;
@@ -238,15 +266,19 @@ static inline int __nlinline_iproute(int request, int xflags, int family, void *
 			nattr++;
 			msg.h.nlmsg_len += nattr * sizeof(msg.a6[0]);
 		}
-		return __nlinline_conversation(&msg);
+		return __nlinline_conversation(__PLUS &msg);
 	}
 }
 
-static inline int nlinline_iproute_add(int family, void *dst_addr, int dst_prefixlen, void *gw_addr) {
-	return __nlinline_iproute(RTM_NEWROUTE, NLM_F_EXCL | NLM_F_CREATE, family, dst_addr, dst_prefixlen, gw_addr);
+static inline int __nlinline_iproute_add(__PLUSARG
+		int family, void *dst_addr, int dst_prefixlen, void *gw_addr) {
+	return __nlinline_iproute(__PLUS
+			RTM_NEWROUTE, NLM_F_EXCL | NLM_F_CREATE, family, dst_addr, dst_prefixlen, gw_addr);
 }
 
-static inline int nlinline_iproute_del(int family, void *dst_addr, int dst_prefixlen, void *gw_addr) {
-	return __nlinline_iproute(RTM_DELROUTE, 0, family, dst_addr, dst_prefixlen, gw_addr);
+static inline int __nlinline_iproute_del(__PLUSARG
+		int family, void *dst_addr, int dst_prefixlen, void *gw_addr) {
+	return __nlinline_iproute(__PLUS
+			RTM_DELROUTE, 0, family, dst_addr, dst_prefixlen, gw_addr);
 }
 #endif

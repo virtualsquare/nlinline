@@ -6,5 +6,5 @@ project(nlinline
 		LANGUAGES C)
 include(GNUInstallDirs)
 
-install(FILES nlinline.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(FILES nlinline.h nlinline+.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 add_subdirectory(man)
