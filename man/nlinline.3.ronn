@@ -27,7 +27,7 @@
 
 ## NAME
 
-nlinline_if_nametoindex, nlinline_linksetupdown, nlinline_ipaddr_add, nlinline_ipaddr_del, nlinline_iproute_add, nlinline_iproute_del - configure network interfaces
+nlinline_if_nametoindex, nlinline_linksetupdown, nlinline_ipaddr_add, nlinline_ipaddr_del, nlinline_iproute_add, nlinline_iproute_del, nlinline_iplink_add, nlinline_iplink_del - configure network interfaces
 
 ## SYNOPSIS
 `#include <nlinline.h>`
@@ -36,35 +36,45 @@ nlinline_if_nametoindex, nlinline_linksetupdown, nlinline_ipaddr_add, nlinline_i
 
 `int nlinline_linksetupdown(unsigned int ` _ifindex_`, int ` _updown_`);`
 
-`int nlinline_ipaddr_add(int ` _family_`, void *`_addr_`, int ` _prefixlen_`, int ` _ifindex_`);`
+`int nlinline_ipaddr_add(int ` _family_`, void *`_addr_`, int ` _prefixlen_`, unsigned int ` _ifindex_`);`
 
-`int nlinline_ipaddr_del(int ` _family_`, void *`_addr_`, int ` _prefixlen_`, int ` _ifindex_`);`
+`int nlinline_ipaddr_del(int ` _family_`, void *`_addr_`, int ` _prefixlen_`, unsigned int ` _ifindex_`);`
 
 `int nlinline_iproute_add(int ` _family_`, void *`_dst_addr_`, int ` _dst_prefixlen_`, void *`_gw_addr_`);`
 
 `int nlinline_iproute_del(int ` _family_`, void *`_dst_addr_`, int ` _dst_prefixlen_`, void *`_gw_addr_`);`
+
+`int nlinline_iplink_add(const char *`_ifname_`, const char *`_type_`, const char *`_data_`);`
+
+`int nlinline_iplink_del(const char *`_ifname_`, unsigned int ` _ifindex_`);`
 
 ## DESCRIPTION
 
 NLINLINE (netlink inline) is a *library* of inline functions providing C programmers with very handy functions to configure network stacks. NLINLINE is entirely implemented in a header file, nlinline.h.
 
   * `nlinline_if_nametoindex`:
-    This function returns the index of the network interface whose name is `ifname`.
+    This function returns the index of the network interface whose name is _ifname_.
 
   * `nlinline_linksetupdown`:
-    This function turns the interface `ifindex` up (`updown == 1`) or down (`updown == 0`).
+    This function turns the interface _ifindex_ up (_updown_ == `1`) or down (_updown_ == `0`).
 
   * `nlinline_ipaddr_add`:
-    This function adds an IP address to the interface `ifindex`. It supports IPv4 (`family == AF_INET`) and IPv6 `(family == AF_INET6)`.
+    This function adds an IP address to the interface _ifindex_. It supports IPv4 (_family_ == `AF_INET`) and IPv6 (_family_ == `AF_INET6`).
 
   * `nlinline_ipaddr_del`:
-    This function removes the IP address from the interface `ifindex`. It supports IPv4 (`family == AF_INET`) and IPv6 `(family == AF_INET6)`.
+    This function removes the IP address from the interface _ifindex_. It supports IPv4 (_family_ == `AF_INET`) and IPv6 (_family_ == `AF_INET6`).
 
   * `nlinline_iproute_add`:
-    This function adds a static route to `dst_addr`/`dst_prefixlen` network through the gateway `gw_addr`. If `dst_addr == NULL` it adds a default route.
+    This function adds a static route to _dst_addr_/_dst_prefixlen_ network through the gateway _gw_addr_. If _dst_addr_ == `NULL` it adds a default route.
 
   * `nlinline_iproute_del`:
-    This function removes the static route to `dst_addr`/`dst_prefixlen` network through the gateway `gw_addr`.
+    This function removes the static route to _dst_addr_/_dst_prefixlen_ network through the gateway _gw_addr_.
+
+  * `nlinline_iplink_add`:
+    This function adds a new link of type _type_, named _ifname_. The value of _data_ depends on the type of link and can be NULL. A default interface name is assigned if _name_ == `NULL`.
+
+  * `nlinline_iplink_del`:
+    This function removes a link. The link to be deleted can be identified by its name (_ifname_) or by its index (_ifindex_). Either _ifindex_ can be zero or _ifname_ can be `NULL`. It is possible to use both _ifindex_ and _ifname_ to identify the link. An error may occur if the parameters are inconsistent.
 
 IP addresses are `void *` arguments, any sequence of 4 or 16 bytes (in network byte order) is a legal IPv4 or IPv6 address respectively.
 

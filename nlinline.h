@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <linux/if.h>
@@ -36,11 +37,14 @@
 static inline int nlinline_if_nametoindex(const char *ifname);
 static inline int nlinline_linksetupdown(unsigned int ifindex, int updown);
 
-static inline int nlinline_ipaddr_add(int family, void *addr, int prefixlen, int ifindex);
-static inline int nlinline_ipaddr_del(int family, void *addr, int prefixlen, int ifindex);
+static inline int nlinline_ipaddr_add(int family, void *addr, int prefixlen, unsigned int ifindex);
+static inline int nlinline_ipaddr_del(int family, void *addr, int prefixlen, unsigned int ifindex);
 
 static inline int nlinline_iproute_add(int family, void *dst_addr, int dst_prefixlen, void *gw_addr);
 static inline int nlinline_iproute_del(int family, void *dst_addr, int dst_prefixlen, void *gw_addr);
+
+static inline int nlinline_iplink_add(const char *ifname, const char *type, const char *data);
+static inline int nlinline_iplink_del(const char *ifname, unsigned int ifindex);
 
 #ifndef __NLINLINE_PLUSTYPE
 #define __PLUSARG
@@ -52,6 +56,8 @@ static inline int nlinline_iproute_del(int family, void *dst_addr, int dst_prefi
 #define __nlinline_ipaddr_del nlinline_ipaddr_del
 #define __nlinline_iproute_add nlinline_iproute_add
 #define __nlinline_iproute_del nlinline_iproute_del
+#define __nlinline_iplink_add nlinline_iplink_add
+#define __nlinline_iplink_del nlinline_iplink_del
 #else
 #define __PLUSARG __NLINLINE_PLUSTYPE *__stack,
 #define __PLUSF __stack->
@@ -166,7 +172,7 @@ struct __nlinline_ipv6attr {
 };
 
 static inline int __nlinline_ipaddr(__PLUSARG
-		int request, int xflags, int family, void *addr, int prefixlen, int ifindex) {
+		int request, int xflags, int family, void *addr, int prefixlen, unsigned int ifindex) {
 	int addrlen = nlinline_family2addrlen(family);
 	if (addrlen == 0)
 		return errno = EINVAL, -1;
@@ -205,13 +211,13 @@ static inline int __nlinline_ipaddr(__PLUSARG
 }
 
 static inline int __nlinline_ipaddr_add(__PLUSARG
-		int family, void *addr, int prefixlen, int ifindex) {
+		int family, void *addr, int prefixlen, unsigned int ifindex) {
 	return __nlinline_ipaddr(__PLUS
 			RTM_NEWADDR, NLM_F_EXCL | NLM_F_CREATE, family, addr, prefixlen, ifindex);
 }
 
 static inline int __nlinline_ipaddr_del(__PLUSARG
-		int family, void *addr, int prefixlen, int ifindex) {
+		int family, void *addr, int prefixlen, unsigned int ifindex) {
 	return __nlinline_ipaddr(__PLUS
 			RTM_DELADDR, 0, family, addr, prefixlen, ifindex);
 }
@@ -281,4 +287,70 @@ static inline int __nlinline_iproute_del(__PLUSARG
 	return __nlinline_iproute(__PLUS
 			RTM_DELROUTE, 0, family, dst_addr, dst_prefixlen, gw_addr);
 }
+
+static inline int __nlinline_add_attr(void *buf, unsigned int type, const char *s) {
+  if (s) {
+    int payloadlen = (strlen(s) + 4) & ~3;
+    int attrlen = sizeof(struct nlattr) + payloadlen;
+    if (buf) {
+      struct nlattr *attr = buf;
+      attr->nla_len = attrlen;
+      attr->nla_type = type;
+      snprintf((char *)(attr + 1), payloadlen, "%s", s);
+    }
+    return attrlen;
+  } else
+    return 0;
+}
+
+static inline int __nlinline_iplink_add(__PLUSARG const char *ifname, const char *type, const char *data) {
+	int msglen = sizeof(struct nlmsghdr) + sizeof(struct ifinfomsg) + sizeof(struct nlattr) +
+		__nlinline_add_attr(NULL, IFLA_IFNAME, ifname) +
+		__nlinline_add_attr(NULL, IFLA_INFO_KIND, type) +
+		__nlinline_add_attr(NULL, IFLA_INFO_DATA, data);
+	unsigned char msgbuf[msglen];
+	unsigned char *rawmsg = msgbuf;
+	struct {
+    struct nlmsghdr h;
+    struct ifinfomsg i;
+	} *msg = (void *) rawmsg;
+	struct nlattr *info;
+	memset(msgbuf, 0, msglen);
+	msg->h.nlmsg_len = msglen;
+	msg->h.nlmsg_type = RTM_NEWLINK;
+	msg->h.nlmsg_flags = NLM_F_EXCL | NLM_F_CREATE | NLM_F_REQUEST | NLM_F_ACK;
+	msg->h.nlmsg_seq = 1;
+	rawmsg += sizeof(*msg);
+	rawmsg += __nlinline_add_attr(rawmsg, IFLA_IFNAME, ifname);
+	info = (void *) rawmsg;
+	rawmsg += sizeof(*info);
+	info->nla_type = IFLA_LINKINFO;
+  rawmsg += __nlinline_add_attr(rawmsg, IFLA_INFO_KIND, type);
+  rawmsg += __nlinline_add_attr(rawmsg, IFLA_INFO_DATA, data);
+	info->nla_len = rawmsg - (unsigned char *)info;
+	return __nlinline_conversation(__PLUS &msgbuf);
+}
+
+static inline int __nlinline_iplink_del(__PLUSARG const char *ifname, unsigned int ifindex) {
+	struct {
+		struct nlmsghdr h;
+		struct ifinfomsg i;
+		struct nlattr a;
+		char ifname[IFNAMSIZ];
+	} msg = {
+		.h.nlmsg_len = sizeof(msg.h) + sizeof(msg.i),
+		.h.nlmsg_type = RTM_DELLINK,
+		.h.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK,
+		.h.nlmsg_seq = 1,
+		.i.ifi_index = ifindex,
+		.a.nla_type = IFLA_IFNAME,
+	};
+	if (ifname) {
+		int namelen = snprintf(msg.ifname, IFNAMSIZ, "%s", ifname);
+		msg.a.nla_len = sizeof(msg.a) + namelen + 1;
+		msg.h.nlmsg_len += (msg.a.nla_len + 3) & ~3;
+	}
+	return __nlinline_conversation(__PLUS &msg);
+}
+
 #endif

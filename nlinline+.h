@@ -66,11 +66,11 @@ struct _stackinfo {
 		__LIB_STACKINFO(X, Y); \
 		return __nlinline_linksetupdown(&stackinfo, ifindex, updown); \
 	} \
-	static inline int NAME ## ipaddr_add(int family, void *addr, int prefixlen, int ifindex) {\
+	static inline int NAME ## ipaddr_add(int family, void *addr, int prefixlen, unsigned int ifindex) {\
 		__LIB_STACKINFO(X, Y); \
 		return __nlinline_ipaddr_add(&stackinfo, family, addr, prefixlen, ifindex); \
 	} \
-	static inline int NAME ## ipaddr_del(int family, void *addr, int prefixlen, int ifindex) {\
+	static inline int NAME ## ipaddr_del(int family, void *addr, int prefixlen, unsigned int ifindex) {\
 		__LIB_STACKINFO(X, Y); \
 		return __nlinline_ipaddr_del(&stackinfo, family, addr, prefixlen, ifindex); \
 	} \
@@ -81,6 +81,14 @@ struct _stackinfo {
 	static inline int NAME ## iproute_del(int family, void *dst_addr, int dst_prefixlen, void *gw_addr) {\
 		__LIB_STACKINFO(X, Y); \
 		return __nlinline_iproute_del(&stackinfo, family, dst_addr, dst_prefixlen, gw_addr); \
+	} \
+	static inline int NAME ## iplink_add(const char *ifname, const char *type, const char *data) {\
+		__LIB_STACKINFO(X, Y); \
+		return __nlinline_iplink_add(&stackinfo, ifname, type, data); \
+	} \
+	static inline int NAME ## iplink_del(const char *ifname, unsigned int ifindex) {\
+		__LIB_STACKINFO(X, Y); \
+		return __nlinline_iplink_del(&stackinfo, ifname, ifindex); \
 	}
 
 #define NLINLINE_LIB(X) __LIB_NLINLINE(X, X, X)
@@ -121,6 +129,14 @@ struct _stackinfo {
 	static inline int X ## iproute_del(void *mstack, int family, void *dst_addr, int dst_prefixlen, void *gw_addr) {\
 		__LIBMULTI_STACKINFO(X, Y, mstack); \
 		return __nlinline_iproute_del(&stackinfo, family, dst_addr, dst_prefixlen, gw_addr); \
+	} \
+	static inline int X ## iplink_add(void *mstack, const char *ifname, const char *type, const char *data) {\
+		__LIBMULTI_STACKINFO(X, Y, mstack); \
+		return __nlinline_iplink_add(&stackinfo, ifname, type, data); \
+	} \
+	static inline int X ## iplink_del(void *mstack, const char *ifname, unsigned int ifindex) {\
+		__LIBMULTI_STACKINFO(X, Y, mstack); \
+		return __nlinline_iplink_del(&stackinfo, ifname, ifindex); \
 	}
 
 #define NLINLINE_LIBMULTI(X) __LIBMULTI_NLINLINE(X, X)

@@ -22,9 +22,9 @@
 .\"
 .\" generated with Ronn-NG/v0.8.0
 .\" http://github.com/apjanke/ronn-ng/tree/0.8.0
-.TH "NLINLINE" "3" "October 2019" "VirtualSquare"
+.TH "NLINLINE" "3" "November 2019" "VirtualSquare"
 .SH "NAME"
-nlinline_if_nametoindex, nlinline_linksetupdown, nlinline_ipaddr_add, nlinline_ipaddr_del, nlinline_iproute_add, nlinline_iproute_del \- configure network interfaces
+nlinline_if_nametoindex, nlinline_linksetupdown, nlinline_ipaddr_add, nlinline_ipaddr_del, nlinline_iproute_add, nlinline_iproute_del, nlinline_iplink_add, nlinline_iplink_del \- configure network interfaces
 .SH "SYNOPSIS"
 \fB#include <nlinline\.h>\fR
 .P
@@ -32,33 +32,43 @@ nlinline_if_nametoindex, nlinline_linksetupdown, nlinline_ipaddr_add, nlinline_i
 .P
 \fBint nlinline_linksetupdown(unsigned int\fR \fIifindex\fR\fB, int\fR \fIupdown\fR\fB);\fR
 .P
-\fBint nlinline_ipaddr_add(int\fR \fIfamily\fR\fB, void *\fR\fIaddr\fR\fB, int\fR \fIprefixlen\fR\fB, int\fR \fIifindex\fR\fB);\fR
+\fBint nlinline_ipaddr_add(int\fR \fIfamily\fR\fB, void *\fR\fIaddr\fR\fB, int\fR \fIprefixlen\fR\fB, unsigned int\fR \fIifindex\fR\fB);\fR
 .P
-\fBint nlinline_ipaddr_del(int\fR \fIfamily\fR\fB, void *\fR\fIaddr\fR\fB, int\fR \fIprefixlen\fR\fB, int\fR \fIifindex\fR\fB);\fR
+\fBint nlinline_ipaddr_del(int\fR \fIfamily\fR\fB, void *\fR\fIaddr\fR\fB, int\fR \fIprefixlen\fR\fB, unsigned int\fR \fIifindex\fR\fB);\fR
 .P
 \fBint nlinline_iproute_add(int\fR \fIfamily\fR\fB, void *\fR\fIdst_addr\fR\fB, int\fR \fIdst_prefixlen\fR\fB, void *\fR\fIgw_addr\fR\fB);\fR
 .P
 \fBint nlinline_iproute_del(int\fR \fIfamily\fR\fB, void *\fR\fIdst_addr\fR\fB, int\fR \fIdst_prefixlen\fR\fB, void *\fR\fIgw_addr\fR\fB);\fR
+.P
+\fBint nlinline_iplink_add(const char *\fR\fIifname\fR\fB, const char *\fR\fItype\fR\fB, const char *\fR\fIdata\fR\fB);\fR
+.P
+\fBint nlinline_iplink_del(const char *\fR\fIifname\fR\fB, unsigned int\fR \fIifindex\fR\fB);\fR
 .SH "DESCRIPTION"
 NLINLINE (netlink inline) is a \fIlibrary\fR of inline functions providing C programmers with very handy functions to configure network stacks\. NLINLINE is entirely implemented in a header file, nlinline\.h\.
 .TP
 \fBnlinline_if_nametoindex\fR
-This function returns the index of the network interface whose name is \fBifname\fR\.
+This function returns the index of the network interface whose name is \fIifname\fR\.
 .TP
 \fBnlinline_linksetupdown\fR
-This function turns the interface \fBifindex\fR up (\fBupdown == 1\fR) or down (\fBupdown == 0\fR)\.
+This function turns the interface \fIifindex\fR up (\fIupdown\fR == \fB1\fR) or down (\fIupdown\fR == \fB0\fR)\.
 .TP
 \fBnlinline_ipaddr_add\fR
-This function adds an IP address to the interface \fBifindex\fR\. It supports IPv4 (\fBfamily == AF_INET\fR) and IPv6 \fB(family == AF_INET6)\fR\.
+This function adds an IP address to the interface \fIifindex\fR\. It supports IPv4 (\fIfamily\fR == \fBAF_INET\fR) and IPv6 (\fIfamily\fR == \fBAF_INET6\fR)\.
 .TP
 \fBnlinline_ipaddr_del\fR
-This function removes the IP address from the interface \fBifindex\fR\. It supports IPv4 (\fBfamily == AF_INET\fR) and IPv6 \fB(family == AF_INET6)\fR\.
+This function removes the IP address from the interface \fIifindex\fR\. It supports IPv4 (\fIfamily\fR == \fBAF_INET\fR) and IPv6 (\fIfamily\fR == \fBAF_INET6\fR)\.
 .TP
 \fBnlinline_iproute_add\fR
-This function adds a static route to \fBdst_addr\fR/\fBdst_prefixlen\fR network through the gateway \fBgw_addr\fR\. If \fBdst_addr == NULL\fR it adds a default route\.
+This function adds a static route to \fIdst_addr\fR/\fIdst_prefixlen\fR network through the gateway \fIgw_addr\fR\. If \fIdst_addr\fR == \fBNULL\fR it adds a default route\.
 .TP
 \fBnlinline_iproute_del\fR
-This function removes the static route to \fBdst_addr\fR/\fBdst_prefixlen\fR network through the gateway \fBgw_addr\fR\.
+This function removes the static route to \fIdst_addr\fR/\fIdst_prefixlen\fR network through the gateway \fIgw_addr\fR\.
+.TP
+\fBnlinline_iplink_add\fR
+This function adds a new link of type \fItype\fR, named \fIifname\fR\. The value of \fIdata\fR depends on the type of link and can be NULL\. A default interface name is assigned if \fIname\fR == \fBNULL\fR\.
+.TP
+\fBnlinline_iplink_del\fR
+This function removes a link\. The link to be deleted can be identified by its name (\fIifname\fR) or by its index (\fIifindex\fR)\. Either \fIifindex\fR can be zero or \fIifname\fR can be \fBNULL\fR\. It is possible to use both \fIifindex\fR and \fIifname\fR to identify the link\. An error may occur if the parameters are inconsistent\.
 .P
 IP addresses are \fBvoid *\fR arguments, any sequence of 4 or 16 bytes (in network byte order) is a legal IPv4 or IPv6 address respectively\.
 .P
