@@ -43,7 +43,7 @@ static inline int nlinline_ipaddr_del(int family, void *addr, int prefixlen, uns
 static inline int nlinline_iproute_add(int family, void *dst_addr, int dst_prefixlen, void *gw_addr);
 static inline int nlinline_iproute_del(int family, void *dst_addr, int dst_prefixlen, void *gw_addr);
 
-static inline int nlinline_iplink_add(const char *ifname, const char *type, const char *data);
+static inline int nlinline_iplink_add(const char *ifname, unsigned int ifindex, const char *type, const char *data);
 static inline int nlinline_iplink_del(const char *ifname, unsigned int ifindex);
 
 #ifndef __NLINLINE_PLUSTYPE
@@ -91,7 +91,10 @@ static inline int __nlinline_geterror(__PLUSARG int fd) {
 	if (replylen <= sizeof(msg.h))
 		return errno = EFAULT, -1;
 	switch (msg.h.nlmsg_type) {
-		case NLMSG_ERROR: return (msg.e.error == 0) ? 0 : (errno = -msg.e.error, -1);
+		case NLMSG_ERROR: if (msg.e.error >= 0)
+												return msg.e.error;
+											else
+												return errno = -msg.e.error, -1;
 		case RTM_NEWLINK: return msg.i.ifi_index;
 		default:          return errno = EFAULT, -1;
 	}
@@ -303,10 +306,11 @@ static inline int __nlinline_add_attr(void *buf, unsigned int type, const char *
     return 0;
 }
 
-static inline int __nlinline_iplink_add(__PLUSARG const char *ifname, const char *type, const char *data) {
+static inline int __nlinline_iplink_add(__PLUSARG const char *ifname, unsigned int ifindex, const char *type, const char *data) {
 	int msglen = sizeof(struct nlmsghdr) + sizeof(struct ifinfomsg) + sizeof(struct nlattr) +
 		__nlinline_add_attr(NULL, IFLA_IFNAME, ifname) +
 		__nlinline_add_attr(NULL, IFLA_INFO_KIND, type) +
+		((ifindex == -1) ? __nlinline_add_attr(NULL, IFLA_NEW_IFINDEX, "") : 0) +
 		__nlinline_add_attr(NULL, IFLA_INFO_DATA, data);
 	unsigned char msgbuf[msglen];
 	unsigned char *rawmsg = msgbuf;
@@ -320,8 +324,11 @@ static inline int __nlinline_iplink_add(__PLUSARG const char *ifname, const char
 	msg->h.nlmsg_type = RTM_NEWLINK;
 	msg->h.nlmsg_flags = NLM_F_EXCL | NLM_F_CREATE | NLM_F_REQUEST | NLM_F_ACK;
 	msg->h.nlmsg_seq = 1;
+	msg->i.ifi_index = ifindex == -1 ? 0 : ifindex;
 	rawmsg += sizeof(*msg);
 	rawmsg += __nlinline_add_attr(rawmsg, IFLA_IFNAME, ifname);
+	if (ifindex == -1)
+		rawmsg += __nlinline_add_attr(rawmsg, IFLA_NEW_IFINDEX, "");
 	info = (void *) rawmsg;
 	rawmsg += sizeof(*info);
 	info->nla_type = IFLA_LINKINFO;

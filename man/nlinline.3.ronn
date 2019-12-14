@@ -44,7 +44,7 @@ nlinline_if_nametoindex, nlinline_linksetupdown, nlinline_ipaddr_add, nlinline_i
 
 `int nlinline_iproute_del(int ` _family_`, void *`_dst_addr_`, int ` _dst_prefixlen_`, void *`_gw_addr_`);`
 
-`int nlinline_iplink_add(const char *`_ifname_`, const char *`_type_`, const char *`_data_`);`
+`int nlinline_iplink_add(const char *`_ifname_`, unsigned int ` _ifindex_`, const char *`_type_`, const char *`_data_`);`
 
 `int nlinline_iplink_del(const char *`_ifname_`, unsigned int ` _ifindex_`);`
 
@@ -71,7 +71,7 @@ NLINLINE (netlink inline) is a *library* of inline functions providing C program
     This function removes the static route to _dst_addr_/_dst_prefixlen_ network through the gateway _gw_addr_.
 
   * `nlinline_iplink_add`:
-    This function adds a new link of type _type_, named _ifname_. The value of _data_ depends on the type of link and can be NULL. A default interface name is assigned if _name_ == `NULL`.
+    This function adds a new link of type _type_, named _ifname_. The value of _data_ depends on the type of link and can be NULL. A default interface name is assigned if _name_ == `NULL`. The link is created with a given index when _ifindex_ is positive.
 
   * `nlinline_iplink_del`:
     This function removes a link. The link to be deleted can be identified by its name (_ifname_) or by its index (_ifindex_). Either _ifindex_ can be zero or _ifname_ can be `NULL`. It is possible to use both _ifindex_ and _ifname_ to identify the link. An error may occur if the parameters are inconsistent.
@@ -88,8 +88,10 @@ Only the code of referenced inline functions enters in the object and executable
 `nlinline_if_nametoindex` returns the interface index or -1 if
 an error occurred (in which case, errno is set appropriately) $
 
-all the other functions return zero in case of success. On error, -1 is returned, and  errno  is$
+All the other functions return zero in case of success. On error, -1 is returned, and  errno  is$
 set appropriately.$
+
+(`nlinline_iplink_add` can return the (positive) ifindex of the newly created link when the argument _ifindex_ is -1 and the stack supports this feature.)
 
 ## EXAMPLE
 ```C

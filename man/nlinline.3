@@ -22,7 +22,7 @@
 .\"
 .\" generated with Ronn-NG/v0.8.0
 .\" http://github.com/apjanke/ronn-ng/tree/0.8.0
-.TH "NLINLINE" "3" "November 2019" "VirtualSquare"
+.TH "NLINLINE" "3" "December 2019" "VirtualSquare"
 .SH "NAME"
 nlinline_if_nametoindex, nlinline_linksetupdown, nlinline_ipaddr_add, nlinline_ipaddr_del, nlinline_iproute_add, nlinline_iproute_del, nlinline_iplink_add, nlinline_iplink_del \- configure network interfaces
 .SH "SYNOPSIS"
@@ -40,7 +40,7 @@ nlinline_if_nametoindex, nlinline_linksetupdown, nlinline_ipaddr_add, nlinline_i
 .P
 \fBint nlinline_iproute_del(int\fR \fIfamily\fR\fB, void *\fR\fIdst_addr\fR\fB, int\fR \fIdst_prefixlen\fR\fB, void *\fR\fIgw_addr\fR\fB);\fR
 .P
-\fBint nlinline_iplink_add(const char *\fR\fIifname\fR\fB, const char *\fR\fItype\fR\fB, const char *\fR\fIdata\fR\fB);\fR
+\fBint nlinline_iplink_add(const char *\fR\fIifname\fR\fB, unsigned int\fR \fIifindex\fR\fB, const char *\fR\fItype\fR\fB, const char *\fR\fIdata\fR\fB);\fR
 .P
 \fBint nlinline_iplink_del(const char *\fR\fIifname\fR\fB, unsigned int\fR \fIifindex\fR\fB);\fR
 .SH "DESCRIPTION"
@@ -65,7 +65,7 @@ This function adds a static route to \fIdst_addr\fR/\fIdst_prefixlen\fR network 
 This function removes the static route to \fIdst_addr\fR/\fIdst_prefixlen\fR network through the gateway \fIgw_addr\fR\.
 .TP
 \fBnlinline_iplink_add\fR
-This function adds a new link of type \fItype\fR, named \fIifname\fR\. The value of \fIdata\fR depends on the type of link and can be NULL\. A default interface name is assigned if \fIname\fR == \fBNULL\fR\.
+This function adds a new link of type \fItype\fR, named \fIifname\fR\. The value of \fIdata\fR depends on the type of link and can be NULL\. A default interface name is assigned if \fIname\fR == \fBNULL\fR\. The link is created with a given index when \fIifindex\fR is positive\.
 .TP
 \fBnlinline_iplink_del\fR
 This function removes a link\. The link to be deleted can be identified by its name (\fIifname\fR) or by its index (\fIifindex\fR)\. Either \fIifindex\fR can be zero or \fIifname\fR can be \fBNULL\fR\. It is possible to use both \fIifindex\fR and \fIifname\fR to identify the link\. An error may occur if the parameters are inconsistent\.
@@ -76,7 +76,9 @@ IP addresses are \fBvoid *\fR arguments, any sequence of 4 or 16 bytes (in netwo
 .SH "RETURN VALUE"
 \fBnlinline_if_nametoindex\fR returns the interface index or \-1 if an error occurred (in which case, errno is set appropriately) $
 .P
-all the other functions return zero in case of success\. On error, \-1 is returned, and errno is$ set appropriately\.$
+All the other functions return zero in case of success\. On error, \-1 is returned, and errno is$ set appropriately\.$
+.P
+(\fBnlinline_iplink_add\fR can return the (positive) ifindex of the newly created link when the argument \fIifindex\fR is \-1 and the stack supports this feature\.)
 .SH "EXAMPLE"
 .nf
 #include <stdio\.h>
