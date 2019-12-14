@@ -75,12 +75,12 @@ The header file `nlinline+.h` implements an extended version of nlinline providi
 NLINLINE_LIB(mystack)
 ``` 
 defines the functions 
-`mystack_if_nametoindex`, `mystack_linksetupdown`... using `mystack_socket` instead of `socket`, mystack_bind` instead of `bind` etc.
+`mystack_if_nametoindex`, `mystack_linksetupdown`... using `mystack_socket` instead of `socket`, `mystack_bind` instead of `bind` etc.
 
 ```
 NLINLINE_LIBCOMP(yourstack)
 ```
-is similar to NLINLINE_LIB: it defines `yourstack_if_nametoindex`, `yourstack_linksetupdown`... 
+is similar to `NLINLINE_LIB`: it defines `yourstack_if_nametoindex`, `yourstack_linksetupdown`... 
 but it uses only `yourstack_socket` instead of `socket`, while `bind`, `close`, `recv`, `send` are the standard system calls.
 
 ```
@@ -146,7 +146,7 @@ int main(int argc, char *argv[]) {
 ```
 
 Functions like `vde_linksetupdown`, `vde_if_nametoindex`,... have been defined by
-NLINLINE_LIBMULTICOMP.
+`NLINLINE_LIBMULTICOMP`.
 
 ## how to install nlinline
 
