@@ -36,6 +36,7 @@
 
 static inline int nlinline_if_nametoindex(const char *ifname);
 static inline int nlinline_linksetupdown(unsigned int ifindex, int updown);
+static inline int nlinline_linksetaddr(unsigned int ifindex, void *macaddr);
 
 static inline int nlinline_ipaddr_add(int family, void *addr, int prefixlen, unsigned int ifindex);
 static inline int nlinline_ipaddr_del(int family, void *addr, int prefixlen, unsigned int ifindex);
@@ -52,6 +53,7 @@ static inline int nlinline_iplink_del(const char *ifname, unsigned int ifindex);
 #define __PLUS
 #define __nlinline_if_nametoindex nlinline_if_nametoindex
 #define __nlinline_linksetupdown nlinline_linksetupdown
+#define __nlinline_linksetaddr nlinline_linksetaddr
 #define __nlinline_ipaddr_add nlinline_ipaddr_add
 #define __nlinline_ipaddr_del nlinline_ipaddr_del
 #define __nlinline_iproute_add nlinline_iproute_add
@@ -154,6 +156,33 @@ static inline int __nlinline_linksetupdown(__PLUSARG unsigned int ifindex, int u
 		.i.ifi_flags = (updown) ? IFF_UP : 0,
 		.i.ifi_change=IFF_UP };
 	return __nlinline_conversation(__PLUS &msg);
+}
+
+struct __nlinline_macaddr {
+  unsigned char byte[6];
+};
+
+struct __nlinline_macattr {
+  struct nlattr h;
+  struct __nlinline_macaddr addr;
+};
+
+static inline int __nlinline_linksetaddr(__PLUSARG unsigned int ifindex, void *macaddr) {
+  struct {
+    struct nlmsghdr h;
+    struct ifinfomsg i;
+    struct __nlinline_macattr mac;
+  } msg = {
+    .h.nlmsg_len = sizeof(msg),
+    .h.nlmsg_type = RTM_NEWLINK,
+    .h.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK,
+    .h.nlmsg_seq = 1,
+    .i.ifi_index = ifindex,
+    .mac.h.nla_len = sizeof(struct __nlinline_macattr),
+    .mac.h.nla_type = IFLA_ADDRESS,
+    .mac.addr = *((struct __nlinline_macaddr *) macaddr)
+  };
+  return __nlinline_conversation(__PLUS &msg);
 }
 
 struct __nlinline_ipv4addr {
