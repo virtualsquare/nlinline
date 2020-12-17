@@ -70,6 +70,10 @@ struct _stackinfo {
 		__LIB_STACKINFO(X, Y); \
 		return __nlinline_linksetaddr(&stackinfo, ifindex, macaddr); \
 	} \
+	static inline int NAME ## linkgetaddr(unsigned int ifindex, void *macaddr) {\
+		__LIB_STACKINFO(X, Y); \
+		return __nlinline_linkgetaddr(&stackinfo, ifindex, macaddr); \
+	} \
 	static inline int NAME ## ipaddr_add(int family, void *addr, int prefixlen, unsigned int ifindex) {\
 		__LIB_STACKINFO(X, Y); \
 		return __nlinline_ipaddr_add(&stackinfo, family, addr, prefixlen, ifindex); \
@@ -121,6 +125,10 @@ struct _stackinfo {
 	static inline int X ## linksetaddr(void *mstack, unsigned int ifindex, void *macaddr) {\
 		__LIBMULTI_STACKINFO(X, Y, mstack); \
 		return __nlinline_linksetaddr(&stackinfo, ifindex, macaddr); \
+	} \
+	static inline int X ## linkgetaddr(void *mstack, unsigned int ifindex, void *macaddr) {\
+		__LIBMULTI_STACKINFO(X, Y, mstack); \
+		return __nlinline_linkgetaddr(&stackinfo, ifindex, macaddr); \
 	} \
 	static inline int X ## ipaddr_add(void *mstack, int family, void *addr, int prefixlen, int ifindex) {\
 		__LIBMULTI_STACKINFO(X, Y, mstack); \

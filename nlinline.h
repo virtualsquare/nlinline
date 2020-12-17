@@ -37,6 +37,7 @@
 static inline int nlinline_if_nametoindex(const char *ifname);
 static inline int nlinline_linksetupdown(unsigned int ifindex, int updown);
 static inline int nlinline_linksetaddr(unsigned int ifindex, void *macaddr);
+static inline int nlinline_linkgetaddr(unsigned int ifindex, void *macaddr);
 
 static inline int nlinline_ipaddr_add(int family, void *addr, int prefixlen, unsigned int ifindex);
 static inline int nlinline_ipaddr_del(int family, void *addr, int prefixlen, unsigned int ifindex);
@@ -54,6 +55,7 @@ static inline int nlinline_iplink_del(const char *ifname, unsigned int ifindex);
 #define __nlinline_if_nametoindex nlinline_if_nametoindex
 #define __nlinline_linksetupdown nlinline_linksetupdown
 #define __nlinline_linksetaddr nlinline_linksetaddr
+#define __nlinline_linkgetaddr nlinline_linkgetaddr
 #define __nlinline_ipaddr_add nlinline_ipaddr_add
 #define __nlinline_ipaddr_del nlinline_ipaddr_del
 #define __nlinline_iproute_add nlinline_iproute_add
@@ -102,23 +104,30 @@ static inline int __nlinline_geterror(__PLUSARG int fd) {
 	}
 }
 
-static inline int __nlinline_conversation(__PLUSARG void *msg) {
+static inline int __nlinline_open_send(__PLUSARG void *msg) {
 	struct nlmsghdr *nlmsg = msg;
 	struct sockaddr_nl sanl = {AF_NETLINK, 0, 0, 0};
-  int ret_value;
-  int fd;
+	int fd;
 #ifdef __NLINLINE_PLUSTYPE
-	if (__PLUSF msocket)
-		fd = __PLUSF msocket(__PLUSF mstack, AF_NETLINK, SOCK_RAW | SOCK_CLOEXEC, NETLINK_ROUTE);
-	else
+  if (__PLUSF msocket)
+    fd = __PLUSF msocket(__PLUSF mstack, AF_NETLINK, SOCK_RAW | SOCK_CLOEXEC, NETLINK_ROUTE);
+  else
 #endif
-		fd	= __PLUSF socket(AF_NETLINK, SOCK_RAW | SOCK_CLOEXEC, NETLINK_ROUTE);
+    fd  = __PLUSF socket(AF_NETLINK, SOCK_RAW | SOCK_CLOEXEC, NETLINK_ROUTE);
   if (fd < 0)
     return fd;
   if (__PLUSF bind(fd, (struct sockaddr *) &sanl, sizeof(struct sockaddr_nl)) < 0)
     return __PLUSF close(fd), -1;
   if (__PLUSF send(fd, msg, nlmsg->nlmsg_len, 0) < 0)
     return __PLUSF close(fd), -1;
+	return fd;
+}
+
+static inline int __nlinline_conversation(__PLUSARG void *msg) {
+  int ret_value;
+  int fd = __nlinline_open_send(__PLUS msg);
+	if (fd < 0)
+		return fd;
   ret_value = __nlinline_geterror(__PLUS fd);
   __PLUSF close(fd);
   return ret_value;
@@ -183,6 +192,47 @@ static inline int __nlinline_linksetaddr(__PLUSARG unsigned int ifindex, void *m
     .mac.addr = *((struct __nlinline_macaddr *) macaddr)
   };
   return __nlinline_conversation(__PLUS &msg);
+}
+
+static inline int __nlinline_linkgetaddr(__PLUSARG unsigned int ifindex, void *macaddr) {
+  struct {
+    struct nlmsghdr h;
+    struct ifinfomsg i;
+    unsigned char attrs[];
+  } *reply, msg = {
+    .h.nlmsg_len = sizeof(msg),
+    .h.nlmsg_type = RTM_GETLINK,
+    .h.nlmsg_flags = NLM_F_REQUEST,
+    .h.nlmsg_seq = 1,
+    .i.ifi_index = ifindex,
+  };
+  struct sockaddr_nl sanl = {AF_NETLINK, 0, 0, 0};
+  int ret_value;
+	int fd = __nlinline_open_send(__PLUS &msg);
+  if (fd < 0)
+    return fd;
+  if ((ret_value = __PLUSF recv(fd, NULL, 0, MSG_PEEK|MSG_TRUNC)) < 0)
+    return close(fd), -1;
+  unsigned char buf[ret_value];
+  if ((ret_value = __PLUSF recv(fd, buf, ret_value, 0)) < 0)
+    return __PLUSF close(fd), -1;
+  reply = (void *) buf;
+  if (ret_value <= sizeof(msg.h) || ret_value < reply->h.nlmsg_len)
+    return errno = EFAULT, __PLUSF close(fd), -1;
+  if (reply->h.nlmsg_type != RTM_NEWLINK)
+    return errno = ENODEV, __PLUSF close(fd), -1;
+  unsigned char *limit = buf + reply->h.nlmsg_len;
+  unsigned char *scan = reply->attrs;
+  while (scan < limit) {
+    struct nlattr *attr = (void *) scan;
+    if (attr->nla_type == IFLA_ADDRESS && attr->nla_len >= 6) {
+      memcpy(macaddr, attr + 1, 6);
+      return __PLUSF close(fd), 0;
+    }
+    scan += NLMSG_ALIGN(attr->nla_len);
+  }
+  __PLUSF close(fd);
+  return errno = ENOENT, -1;
 }
 
 struct __nlinline_ipv4addr {
