@@ -17,9 +17,13 @@ NLinline provides the following functions:
 
 * `int nlinline_ipaddr_del(int family, void *addr, int prefixlen, int ifindex)` remove the IP address from the interface `ifindex`. It supports IPv4 (`family == AF_INET`) and IPv6 `(family == AF_INET6)`.
 
-* `int nlinline_iproute_add(int family, void *dst_addr, int dst_prefixlen, void *gw_addr);` add a static route to `dst_addr`/`dst_prefixlen` network through the gateway `gw_addr`. If `dst_addr == NULL` it adds a default route.
+* `int nlinline_iproute_add(int family, void *dst_addr, int dst_prefixlen, void *gw_addr, int ifindex);` add a static route to `dst_addr`/`dst_prefixlen` network through the gateway `gw_addr`. If `dst_addr == NULL` it adds a default route. `ifindex` must be specified when `gw_addr` is an IPv6 link local address.
 
-* `int nlinline_iproute_del(int family, void *dst_addr, int dst_prefixlen, void *gw_addr);` remove the static route to `dst_addr`/`dst_prefixlen` network through the gateway `gw_addr`. 
+* `int nlinline_iproute_del(int family, void *dst_addr, int dst_prefixlen, void *gw_addr, int ifindex);` remove the static route to `dst_addr`/`dst_prefixlen` network through the gateway `gw_addr`.
+
+* `int nlinline_linksetaddr(unsigned int ifindex, void *macaddr);` set the MAC address of the interface `ifindex`.
+
+* `int nlinline_linkgetaddr(unsigned int ifindex, void *macaddr);` get the MAC address of the interface `ifindex`.
 
 IP addresses are `void *` arguments, any sequence of 4 or 16 bytes (in network byte order) is a legal IPv4 or IPv6 address respectively.
 
@@ -60,7 +64,7 @@ int main(int argc, char *argv[]) {
     perror("addr ipv6");
   if (nlinline_ipaddr_add(AF_INET6, ipv6addr, 64, ifindex) < 0)
     perror("route ipv4");
-  if (nlinline_iproute_add(AF_INET6, NULL, 0, ipv6gw) < 0)
+  if (nlinline_iproute_add(AF_INET6, NULL, 0, ipv6gw, 0) < 0)
     perror("route ipv6");
   return 0;
 }
@@ -139,7 +143,7 @@ int main(int argc, char *argv[]) {
     perror("addr ipv6");
   if (vde_ipaddr_add(stack, AF_INET6, ipv6addr, 64, ifindex) < 0)
     perror("route ipv4");
-  if (vde_iproute_add(stack, AF_INET6, NULL, 0, ipv6gw) < 0)
+  if (vde_iproute_add(stack, AF_INET6, NULL, 0, ipv6gw, 0) < 0)
     perror("route ipv6");
 
   /* use the stack */

@@ -42,8 +42,8 @@ static inline int nlinline_linkgetaddr(unsigned int ifindex, void *macaddr);
 static inline int nlinline_ipaddr_add(int family, void *addr, int prefixlen, unsigned int ifindex);
 static inline int nlinline_ipaddr_del(int family, void *addr, int prefixlen, unsigned int ifindex);
 
-static inline int nlinline_iproute_add(int family, void *dst_addr, int dst_prefixlen, void *gw_addr);
-static inline int nlinline_iproute_del(int family, void *dst_addr, int dst_prefixlen, void *gw_addr);
+static inline int nlinline_iproute_add(int family, void *dst_addr, int dst_prefixlen, void *gw_addr, unsigned int ifindex);
+static inline int nlinline_iproute_del(int family, void *dst_addr, int dst_prefixlen, void *gw_addr, unsigned int ifindex);
 
 static inline int nlinline_iplink_add(const char *ifname, unsigned int ifindex, const char *type, const char *data);
 static inline int nlinline_iplink_del(const char *ifname, unsigned int ifindex);
@@ -304,8 +304,13 @@ static inline int __nlinline_ipaddr_del(__PLUSARG
 			RTM_DELADDR, 0, family, addr, prefixlen, ifindex);
 }
 
+struct __nlinline_u32 {
+  struct nlattr h;
+	__u32 value;
+};
+
 static inline int __nlinline_iproute(__PLUSARG
-		int request, int xflags, int family, void *dst_addr, int dst_prefixlen, void *gw_addr) {
+		int request, int xflags, int family, void *dst_addr, int dst_prefixlen, void *gw_addr, unsigned int ifindex) {
 	int addrlen = nlinline_family2addrlen(family);
   if (addrlen == 0)
     return errno = EINVAL, -1;
@@ -313,12 +318,13 @@ static inline int __nlinline_iproute(__PLUSARG
     struct {
       struct nlmsghdr h;
       struct rtmsg r;
+      struct __nlinline_u32 oif;
       union {
         struct __nlinline_ipv4attr a4[2];
         struct __nlinline_ipv6attr a6[2];
       };
     } msg = {
-      .h.nlmsg_len = sizeof(msg.h) + sizeof(msg.r),
+      .h.nlmsg_len = sizeof(msg.h) + sizeof(msg.r) + sizeof(msg.oif),
       .h.nlmsg_type = request,
       .h.nlmsg_flags =  NLM_F_REQUEST | NLM_F_ACK | xflags,
       .h.nlmsg_seq = 1,
@@ -327,28 +333,32 @@ static inline int __nlinline_iproute(__PLUSARG
 			.r.rtm_table = RT_TABLE_MAIN,
 			.r.rtm_protocol = RTPROT_BOOT,
 			.r.rtm_scope = RT_SCOPE_UNIVERSE,
-			.r.rtm_type = RTN_UNICAST};
+			.r.rtm_type = RTN_UNICAST,
+			.oif.h.nla_type = (ifindex == 0) ? RTA_UNSPEC : RTA_OIF,
+			.oif.h.nla_len = sizeof(msg.oif),
+			.oif.value = ifindex,
+		};
 		int nattr = 0;
     if (addrlen == 4) {
 			if (dst_prefixlen > 0) {
-				msg.a4[nattr].h.nla_len = sizeof(struct nlattr) + addrlen;
+				msg.a4[nattr].h.nla_len = sizeof(msg.a4[0]);
 				msg.a4[nattr].h.nla_type = RTA_DST;
 				msg.a4[nattr].addr = *((struct __nlinline_ipv4addr *)dst_addr);
 				nattr++;
 			}
-			msg.a4[nattr].h.nla_len = sizeof(struct nlattr) + addrlen;
+			msg.a4[nattr].h.nla_len = sizeof(msg.a4[0]);
 			msg.a4[nattr].h.nla_type = RTA_GATEWAY;
 			msg.a4[nattr].addr = *((struct __nlinline_ipv4addr *)gw_addr);
 			nattr++;
 			msg.h.nlmsg_len += nattr * sizeof(msg.a4[0]);
     } else {
 			if (dst_prefixlen > 0) {
-				msg.a6[nattr].h.nla_len = sizeof(struct nlattr) + addrlen;
+				msg.a6[nattr].h.nla_len = sizeof(msg.a6[0]);
 				msg.a6[nattr].h.nla_type = RTA_DST;
 				msg.a6[nattr].addr = *((struct __nlinline_ipv6addr *)dst_addr);
 				nattr++;
 			}
-			msg.a6[nattr].h.nla_len = sizeof(struct nlattr) + addrlen;
+			msg.a6[nattr].h.nla_len = sizeof(msg.a6[0]);
 			msg.a6[nattr].h.nla_type = RTA_GATEWAY;
 			msg.a6[nattr].addr = *((struct __nlinline_ipv6addr *)gw_addr);
 			nattr++;
@@ -359,15 +369,15 @@ static inline int __nlinline_iproute(__PLUSARG
 }
 
 static inline int __nlinline_iproute_add(__PLUSARG
-		int family, void *dst_addr, int dst_prefixlen, void *gw_addr) {
+		int family, void *dst_addr, int dst_prefixlen, void *gw_addr, unsigned int ifindex) {
 	return __nlinline_iproute(__PLUS
-			RTM_NEWROUTE, NLM_F_EXCL | NLM_F_CREATE, family, dst_addr, dst_prefixlen, gw_addr);
+			RTM_NEWROUTE, NLM_F_EXCL | NLM_F_CREATE, family, dst_addr, dst_prefixlen, gw_addr, ifindex);
 }
 
 static inline int __nlinline_iproute_del(__PLUSARG
-		int family, void *dst_addr, int dst_prefixlen, void *gw_addr) {
+		int family, void *dst_addr, int dst_prefixlen, void *gw_addr, unsigned int ifindex) {
 	return __nlinline_iproute(__PLUS
-			RTM_DELROUTE, 0, family, dst_addr, dst_prefixlen, gw_addr);
+			RTM_DELROUTE, 0, family, dst_addr, dst_prefixlen, gw_addr, ifindex);
 }
 
 static inline int __nlinline_add_attr(void *buf, unsigned int type, const char *s) {

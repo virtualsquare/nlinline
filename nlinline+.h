@@ -82,13 +82,13 @@ struct _stackinfo {
 		__LIB_STACKINFO(X, Y); \
 		return __nlinline_ipaddr_del(&stackinfo, family, addr, prefixlen, ifindex); \
 	} \
-	static inline int NAME ## iproute_add(int family, void *dst_addr, int dst_prefixlen, void *gw_addr) {\
+	static inline int NAME ## iproute_add(int family, void *dst_addr, int dst_prefixlen, void *gw_addr, unsigned int ifindex) {\
 		__LIB_STACKINFO(X, Y); \
-		return __nlinline_iproute_add(&stackinfo, family, dst_addr, dst_prefixlen, gw_addr); \
+		return __nlinline_iproute_add(&stackinfo, family, dst_addr, dst_prefixlen, gw_addr, ifindex); \
 	} \
-	static inline int NAME ## iproute_del(int family, void *dst_addr, int dst_prefixlen, void *gw_addr) {\
+	static inline int NAME ## iproute_del(int family, void *dst_addr, int dst_prefixlen, void *gw_addr, unsigned int ifindex) {\
 		__LIB_STACKINFO(X, Y); \
-		return __nlinline_iproute_del(&stackinfo, family, dst_addr, dst_prefixlen, gw_addr); \
+		return __nlinline_iproute_del(&stackinfo, family, dst_addr, dst_prefixlen, gw_addr, ifindex); \
 	} \
 	static inline int NAME ## iplink_add(const char *ifname, unsigned int ifindex, const char *type, const char *data) {\
 		__LIB_STACKINFO(X, Y); \
@@ -138,13 +138,13 @@ struct _stackinfo {
 		__LIBMULTI_STACKINFO(X, Y, mstack); \
 		return __nlinline_ipaddr_del(&stackinfo, family, addr, prefixlen, ifindex); \
 	} \
-	static inline int X ## iproute_add(void *mstack, int family, void *dst_addr, int dst_prefixlen, void *gw_addr) {\
+	static inline int X ## iproute_add(void *mstack, int family, void *dst_addr, int dst_prefixlen, void *gw_addr, unsigned int ifindex) {\
 		__LIBMULTI_STACKINFO(X, Y, mstack); \
-		return __nlinline_iproute_add(&stackinfo, family, dst_addr, dst_prefixlen, gw_addr); \
+		return __nlinline_iproute_add(&stackinfo, family, dst_addr, dst_prefixlen, gw_addr, ifindex); \
 	} \
-	static inline int X ## iproute_del(void *mstack, int family, void *dst_addr, int dst_prefixlen, void *gw_addr) {\
+	static inline int X ## iproute_del(void *mstack, int family, void *dst_addr, int dst_prefixlen, void *gw_addr, unsigned int ifindex) {\
 		__LIBMULTI_STACKINFO(X, Y, mstack); \
-		return __nlinline_iproute_del(&stackinfo, family, dst_addr, dst_prefixlen, gw_addr); \
+		return __nlinline_iproute_del(&stackinfo, family, dst_addr, dst_prefixlen, gw_addr, ifindex); \
 	} \
 	static inline int X ## iplink_add(void *mstack, const char *ifname, unsigned int ifindex, const char *type, const char *data) {\
 		__LIBMULTI_STACKINFO(X, Y, mstack); \

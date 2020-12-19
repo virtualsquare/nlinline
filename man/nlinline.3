@@ -20,11 +20,11 @@
 .\" Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston,
 .\" MA 02110-1301 USA.
 .\"
-.\" generated with Ronn-NG/v0.8.0
-.\" http://github.com/apjanke/ronn-ng/tree/0.8.0
-.TH "NLINLINE" "3" "December 2019" "VirtualSquare"
+.\" generated with Ronn-NG/v0.10.0
+.\" http://github.com/apjanke/ronn-ng/tree/0.10.0-SNAPSHOT
+.TH "NLINLINE" "3" "December 2020" "VirtualSquare"
 .SH "NAME"
-nlinline_if_nametoindex, nlinline_linksetupdown, nlinline_ipaddr_add, nlinline_ipaddr_del, nlinline_iproute_add, nlinline_iproute_del, nlinline_iplink_add, nlinline_iplink_del \- configure network interfaces
+nlinline_if_nametoindex, nlinline_linksetupdown, nlinline_ipaddr_add, nlinline_ipaddr_del, nlinline_iproute_add, nlinline_iproute_del, nlinline_iplink_add, nlinline_iplink_del, nlinline_linksetaddr, nlinline_linkgetaddr \- configure network interfaces
 .SH "SYNOPSIS"
 \fB#include <nlinline\.h>\fR
 .P
@@ -36,13 +36,17 @@ nlinline_if_nametoindex, nlinline_linksetupdown, nlinline_ipaddr_add, nlinline_i
 .P
 \fBint nlinline_ipaddr_del(int\fR \fIfamily\fR\fB, void *\fR\fIaddr\fR\fB, int\fR \fIprefixlen\fR\fB, unsigned int\fR \fIifindex\fR\fB);\fR
 .P
-\fBint nlinline_iproute_add(int\fR \fIfamily\fR\fB, void *\fR\fIdst_addr\fR\fB, int\fR \fIdst_prefixlen\fR\fB, void *\fR\fIgw_addr\fR\fB);\fR
+\fBint nlinline_iproute_add(int\fR \fIfamily\fR\fB, void *\fR\fIdst_addr\fR\fB, int\fR \fIdst_prefixlen\fR\fB, void *\fR\fIgw_addr\fR\fB, unsigned int\fR \fIifindex\fR\fB);\fR
 .P
-\fBint nlinline_iproute_del(int\fR \fIfamily\fR\fB, void *\fR\fIdst_addr\fR\fB, int\fR \fIdst_prefixlen\fR\fB, void *\fR\fIgw_addr\fR\fB);\fR
+\fBint nlinline_iproute_del(int\fR \fIfamily\fR\fB, void *\fR\fIdst_addr\fR\fB, int\fR \fIdst_prefixlen\fR\fB, void *\fR\fIgw_addr\fR\fB, unsigned int\fR \fIifindex\fR\fB);\fR
 .P
 \fBint nlinline_iplink_add(const char *\fR\fIifname\fR\fB, unsigned int\fR \fIifindex\fR\fB, const char *\fR\fItype\fR\fB, const char *\fR\fIdata\fR\fB);\fR
 .P
 \fBint nlinline_iplink_del(const char *\fR\fIifname\fR\fB, unsigned int\fR \fIifindex\fR\fB);\fR
+.P
+\fBint nlinline_linksetaddr(unsigned int\fR \fIifindex\fR\fB, void *\fR\fImacaddr\fR\fB);\fR
+.P
+\fBint nlinline_linkgetaddr(unsigned int\fR \fIifindex\fR\fB, void *\fR\fImacaddr\fR\fB);\fR
 .SH "DESCRIPTION"
 NLINLINE (netlink inline) is a \fIlibrary\fR of inline functions providing C programmers with very handy functions to configure network stacks\. NLINLINE is entirely implemented in a header file, nlinline\.h\.
 .TP
@@ -59,7 +63,7 @@ This function adds an IP address to the interface \fIifindex\fR\. It supports IP
 This function removes the IP address from the interface \fIifindex\fR\. It supports IPv4 (\fIfamily\fR == \fBAF_INET\fR) and IPv6 (\fIfamily\fR == \fBAF_INET6\fR)\.
 .TP
 \fBnlinline_iproute_add\fR
-This function adds a static route to \fIdst_addr\fR/\fIdst_prefixlen\fR network through the gateway \fIgw_addr\fR\. If \fIdst_addr\fR == \fBNULL\fR it adds a default route\.
+This function adds a static route to \fIdst_addr\fR/\fIdst_prefixlen\fR network through the gateway \fIgw_addr\fR\. If \fIdst_addr\fR == \fBNULL\fR it adds a default route\. \fIifindex\fR must be specified when \fIgw_addr\fR is an IPv6 link local address\.
 .TP
 \fBnlinline_iproute_del\fR
 This function removes the static route to \fIdst_addr\fR/\fIdst_prefixlen\fR network through the gateway \fIgw_addr\fR\.
@@ -69,14 +73,20 @@ This function adds a new link of type \fItype\fR, named \fIifname\fR\. The value
 .TP
 \fBnlinline_iplink_del\fR
 This function removes a link\. The link to be deleted can be identified by its name (\fIifname\fR) or by its index (\fIifindex\fR)\. Either \fIifindex\fR can be zero or \fIifname\fR can be \fBNULL\fR\. It is possible to use both \fIifindex\fR and \fIifname\fR to identify the link\. An error may occur if the parameters are inconsistent\.
+.TP
+\fBnlinline_linksetaddr\fR
+This functions sets the mac address of the interface \fIifindex\fR\.
+.TP
+\fBnlinline_linkgetaddr\fR
+This functions gets the mac address of the interface \fIifindex\fR\.
 .P
 IP addresses are \fBvoid *\fR arguments, any sequence of 4 or 16 bytes (in network byte order) is a legal IPv4 or IPv6 address respectively\.
 .P
 \fBnlinline\fR functions do not add dependencies at run\-time\. This is useful for security critical applications (like PAM modules) These inline functions use netlink only, they do not depend on the obsolete netdevice (ioctl) API\. Only the code of referenced inline functions enters in the object and executable code\.
 .SH "RETURN VALUE"
-\fBnlinline_if_nametoindex\fR returns the interface index or \-1 if an error occurred (in which case, errno is set appropriately) $
+\fBnlinline_if_nametoindex\fR returns the interface index or \-1 if an error occurred (in which case, errno is set appropriately)
 .P
-All the other functions return zero in case of success\. On error, \-1 is returned, and errno is$ set appropriately\.$
+All the other functions return zero in case of success\. On error, \-1 is returned, and errno is set appropriately\.
 .P
 (\fBnlinline_iplink_add\fR can return the (positive) ifindex of the newly created link when the argument \fIifindex\fR is \-1 and the stack supports this feature\.)
 .SH "EXAMPLE"
