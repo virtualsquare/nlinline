@@ -318,7 +318,7 @@ static inline int __nlinline_iproute(__PLUSARG
         struct __nlinline_ipv6attr a6[2];
       };
     } msg = {
-      .h.nlmsg_len = sizeof(msg.h) + sizeof(msg.r) + 2 * sizeof(struct nlattr) + 2 * addrlen,
+      .h.nlmsg_len = sizeof(msg.h) + sizeof(msg.r),
       .h.nlmsg_type = request,
       .h.nlmsg_flags =  NLM_F_REQUEST | NLM_F_ACK | xflags,
       .h.nlmsg_seq = 1,
