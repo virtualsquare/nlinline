@@ -114,11 +114,11 @@ int main(int argc, char *argv[]) {
     perror("link up");
   if (nlinline_ipaddr_add(AF_INET, ipv4addr, 24, ifindex) < 0)
     perror("addr ipv4");
-  if (nlinline_iproute_add(AF_INET, NULL, 0, ipv4gw) < 0)
+  if (nlinline_iproute_add(AF_INET, NULL, 0, ipv4gw, 0) < 0)
     perror("addr ipv6");
   if (nlinline_ipaddr_add(AF_INET6, ipv6addr, 64, ifindex) < 0)
     perror("route ipv4");
-  if (nlinline_iproute_add(AF_INET6, NULL, 0, ipv6gw) < 0)
+  if (nlinline_iproute_add(AF_INET6, NULL, 0, ipv6gw, 0) < 0)
     perror("route ipv6");
   return 0;
 }
