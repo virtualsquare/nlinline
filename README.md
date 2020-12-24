@@ -25,6 +25,8 @@ NLinline provides the following functions:
 
 * `int nlinline_linkgetaddr(unsigned int ifindex, void *macaddr);` get the MAC address of the interface `ifindex`.
 
+* `int nlinline_linksetmtu(unsigned int ifindex, unsigned int mtu);` set the MTU address of the interface `ifindex`.
+
 IP addresses are `void *` arguments, any sequence of 4 or 16 bytes (in network byte order) is a legal IPv4 or IPv6 address respectively.
 
 ### Netlink + inline

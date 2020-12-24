@@ -38,6 +38,7 @@ static inline int nlinline_if_nametoindex(const char *ifname);
 static inline int nlinline_linksetupdown(unsigned int ifindex, int updown);
 static inline int nlinline_linksetaddr(unsigned int ifindex, void *macaddr);
 static inline int nlinline_linkgetaddr(unsigned int ifindex, void *macaddr);
+static inline int nlinline_linksetmtu(unsigned int ifindex, unsigned int mtu);
 
 static inline int nlinline_ipaddr_add(int family, void *addr, int prefixlen, unsigned int ifindex);
 static inline int nlinline_ipaddr_del(int family, void *addr, int prefixlen, unsigned int ifindex);
@@ -56,6 +57,7 @@ static inline int nlinline_iplink_del(const char *ifname, unsigned int ifindex);
 #define __nlinline_linksetupdown nlinline_linksetupdown
 #define __nlinline_linksetaddr nlinline_linksetaddr
 #define __nlinline_linkgetaddr nlinline_linkgetaddr
+#define __nlinline_linksetmtu nlinline_linksetmtu
 #define __nlinline_ipaddr_add nlinline_ipaddr_add
 #define __nlinline_ipaddr_del nlinline_ipaddr_del
 #define __nlinline_iproute_add nlinline_iproute_add
@@ -235,6 +237,29 @@ static inline int __nlinline_linkgetaddr(__PLUSARG unsigned int ifindex, void *m
   return errno = ENOENT, -1;
 }
 
+struct __nlinline_u32 {
+  struct nlattr h;
+	__u32 value;
+};
+
+static inline int __nlinline_linksetmtu(__PLUSARG unsigned int ifindex, unsigned int mtu) {
+	struct {
+		struct nlmsghdr h;
+		struct ifinfomsg i;
+		struct __nlinline_u32 mtu;
+	} msg = {
+		.h.nlmsg_len = sizeof(msg),
+		.h.nlmsg_type = RTM_NEWLINK,
+		.h.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK,
+		.h.nlmsg_seq = 1,
+		.i.ifi_index = ifindex,
+		.mtu.h.nla_len = sizeof(struct __nlinline_u32),
+		.mtu.h.nla_type = IFLA_MTU,
+		.mtu.value = mtu,
+  };
+	return __nlinline_conversation(__PLUS &msg);
+}
+
 struct __nlinline_ipv4addr {
 	unsigned char byte[4];
 };
@@ -303,11 +328,6 @@ static inline int __nlinline_ipaddr_del(__PLUSARG
 	return __nlinline_ipaddr(__PLUS
 			RTM_DELADDR, 0, family, addr, prefixlen, ifindex);
 }
-
-struct __nlinline_u32 {
-  struct nlattr h;
-	__u32 value;
-};
 
 static inline int __nlinline_iproute(__PLUSARG
 		int request, int xflags, int family, void *dst_addr, int dst_prefixlen, void *gw_addr, unsigned int ifindex) {

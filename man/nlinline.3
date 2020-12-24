@@ -47,6 +47,8 @@ nlinline_if_nametoindex, nlinline_linksetupdown, nlinline_ipaddr_add, nlinline_i
 \fBint nlinline_linksetaddr(unsigned int\fR \fIifindex\fR\fB, void *\fR\fImacaddr\fR\fB);\fR
 .P
 \fBint nlinline_linkgetaddr(unsigned int\fR \fIifindex\fR\fB, void *\fR\fImacaddr\fR\fB);\fR
+.P
+\fBint nlinline_linksetmtu(unsigned int\fR \fIifindex\fR\fB, unsigned int\fR \fImtu\fR\fB);\fR
 .SH "DESCRIPTION"
 NLINLINE (netlink inline) is a \fIlibrary\fR of inline functions providing C programmers with very handy functions to configure network stacks\. NLINLINE is entirely implemented in a header file, nlinline\.h\.
 .TP
@@ -79,6 +81,9 @@ This functions sets the mac address of the interface \fIifindex\fR\.
 .TP
 \fBnlinline_linkgetaddr\fR
 This functions gets the mac address of the interface \fIifindex\fR\.
+.TP
+\fBnlinline_linksetmtu\fR
+This functions sets the MTU (Maximum Transfer Unit) of the interface \fIifindex\fR\.
 .P
 IP addresses are \fBvoid *\fR arguments, any sequence of 4 or 16 bytes (in network byte order) is a legal IPv4 or IPv6 address respectively\.
 .P
