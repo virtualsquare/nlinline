@@ -64,6 +64,7 @@ static inline int nlinline_iplink_del(const char *ifname, unsigned int ifindex);
 #define __nlinline_iproute_del nlinline_iproute_del
 #define __nlinline_iplink_add nlinline_iplink_add
 #define __nlinline_iplink_del nlinline_iplink_del
+#define __nlinline_nldialog nlinline_nldialog
 #else
 #define __PLUSARG __NLINLINE_PLUSTYPE *__stack,
 #define __PLUSF __stack->
@@ -125,7 +126,7 @@ static inline int __nlinline_open_send(__PLUSARG void *msg) {
 	return fd;
 }
 
-static inline int __nlinline_conversation(__PLUSARG void *msg) {
+static inline int __nlinline_nldialog(__PLUSARG void *msg) {
   int ret_value;
   int fd = __nlinline_open_send(__PLUS msg);
 	if (fd < 0)
@@ -151,7 +152,7 @@ static inline int __nlinline_if_nametoindex(__PLUSARG const char *ifname) {
 	int namelen = snprintf(msg.ifname, IFNAMSIZ, "%s", ifname);
 	msg.a.nla_len = sizeof(msg.a) + namelen + 1;
 	msg.h.nlmsg_len += (msg.a.nla_len + 3) & ~3;
-	return __nlinline_conversation(__PLUS &msg);
+	return __nlinline_nldialog(__PLUS &msg);
 }
 
 static inline int __nlinline_linksetupdown(__PLUSARG unsigned int ifindex, int updown) {
@@ -166,7 +167,7 @@ static inline int __nlinline_linksetupdown(__PLUSARG unsigned int ifindex, int u
 		.i.ifi_index = ifindex,
 		.i.ifi_flags = (updown) ? IFF_UP : 0,
 		.i.ifi_change=IFF_UP };
-	return __nlinline_conversation(__PLUS &msg);
+	return __nlinline_nldialog(__PLUS &msg);
 }
 
 struct __nlinline_macaddr {
@@ -193,7 +194,7 @@ static inline int __nlinline_linksetaddr(__PLUSARG unsigned int ifindex, void *m
     .mac.h.nla_type = IFLA_ADDRESS,
     .mac.addr = *((struct __nlinline_macaddr *) macaddr)
   };
-  return __nlinline_conversation(__PLUS &msg);
+  return __nlinline_nldialog(__PLUS &msg);
 }
 
 static inline int __nlinline_linkgetaddr(__PLUSARG unsigned int ifindex, void *macaddr) {
@@ -257,7 +258,7 @@ static inline int __nlinline_linksetmtu(__PLUSARG unsigned int ifindex, unsigned
 		.mtu.h.nla_type = IFLA_MTU,
 		.mtu.value = mtu,
   };
-	return __nlinline_conversation(__PLUS &msg);
+	return __nlinline_nldialog(__PLUS &msg);
 }
 
 struct __nlinline_ipv4addr {
@@ -313,7 +314,7 @@ static inline int __nlinline_ipaddr(__PLUSARG
 			msg.a6[0].addr = msg.a6[1].addr = *((struct __nlinline_ipv6addr *) addr);
 			msg.h.nlmsg_len += 2 * sizeof(msg.a6[0]);
 		}
-		return __nlinline_conversation(__PLUS &msg);
+		return __nlinline_nldialog(__PLUS &msg);
 	}
 }
 
@@ -384,7 +385,7 @@ static inline int __nlinline_iproute(__PLUSARG
 			nattr++;
 			msg.h.nlmsg_len += nattr * sizeof(msg.a6[0]);
 		}
-		return __nlinline_conversation(__PLUS &msg);
+		return __nlinline_nldialog(__PLUS &msg);
 	}
 }
 
@@ -444,7 +445,7 @@ static inline int __nlinline_iplink_add(__PLUSARG const char *ifname, unsigned i
   rawmsg += __nlinline_add_attr(rawmsg, IFLA_INFO_KIND, type);
   rawmsg += __nlinline_add_attr(rawmsg, IFLA_INFO_DATA, data);
 	info->nla_len = rawmsg - (unsigned char *)info;
-	return __nlinline_conversation(__PLUS &msgbuf);
+	return __nlinline_nldialog(__PLUS &msgbuf);
 }
 
 static inline int __nlinline_iplink_del(__PLUSARG const char *ifname, unsigned int ifindex) {
@@ -466,7 +467,7 @@ static inline int __nlinline_iplink_del(__PLUSARG const char *ifname, unsigned i
 		msg.a.nla_len = sizeof(msg.a) + namelen + 1;
 		msg.h.nlmsg_len += (msg.a.nla_len + 3) & ~3;
 	}
-	return __nlinline_conversation(__PLUS &msg);
+	return __nlinline_nldialog(__PLUS &msg);
 }
 
 #endif

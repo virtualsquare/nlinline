@@ -101,6 +101,10 @@ struct _stackinfo {
 	static inline int NAME ## iplink_del(const char *ifname, unsigned int ifindex) {\
 		__LIB_STACKINFO(X, Y); \
 		return __nlinline_iplink_del(&stackinfo, ifname, ifindex); \
+	} \
+	static inline int NAME ## nldialog(const char *ifname, void *msg) {\
+		__LIB_STACKINFO(X, Y); \
+		return __nlinline_nldialog(&stackinfo, msg); \
 	}
 
 #define NLINLINE_LIB(X) __LIB_NLINLINE(X, X, X)
@@ -161,6 +165,10 @@ struct _stackinfo {
 	static inline int X ## iplink_del(void *mstack, const char *ifname, unsigned int ifindex) {\
 		__LIBMULTI_STACKINFO(X, Y, mstack); \
 		return __nlinline_iplink_del(&stackinfo, ifname, ifindex); \
+	} \
+	static inline int X ## nldialog(void *mstack, void *msg) {\
+		__LIBMULTI_STACKINFO(X, Y, mstack); \
+		return __nlinline_nldialog(&stackinfo, msg); \
 	}
 
 #define NLINLINE_LIBMULTI(X) __LIBMULTI_NLINLINE(X, X)
