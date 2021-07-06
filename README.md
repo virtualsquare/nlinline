@@ -32,7 +32,7 @@ IP addresses are `void *` arguments, any sequence of 4 or 16 bytes (in network b
 ### Netlink + inline
 
 * NLINLINE is a simple way to configure networking for network namespaces and *Internet of Threads* programs.
-* NLINLINE do not add dependencies at run-time. It is useful for security critical applications (like PAM modules)
+* NLINLINE does not add dependencies at run-time. It is useful for security critical applications (like PAM modules)
 * NLINLINE uses netlink only, it does not depends on the obsolete netdevice (ioctl) API.
 * Only the code of referenced inline functions enters in the object and executable code.
 
