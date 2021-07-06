@@ -403,7 +403,7 @@ static inline int __nlinline_iproute_del(__PLUSARG
 
 static inline int __nlinline_add_attr(void *buf, unsigned int type, const char *s) {
   if (s) {
-    int payloadlen = (strlen(s) + 4) & ~3;
+    int payloadlen = strlen(s) + 1;
     int attrlen = sizeof(struct nlattr) + payloadlen;
     if (buf) {
       struct nlattr *attr = buf;
@@ -411,7 +411,7 @@ static inline int __nlinline_add_attr(void *buf, unsigned int type, const char *
       attr->nla_type = type;
       snprintf((char *)(attr + 1), payloadlen, "%s", s);
     }
-    return attrlen;
+    return (attrlen + 3) & ~3;
   } else
     return 0;
 }
