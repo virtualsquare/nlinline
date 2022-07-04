@@ -421,7 +421,7 @@ static inline int __nlinline_iplink_add(__PLUSARG const char *ifname, unsigned i
 		__nlinline_add_attr(NULL, IFLA_IFNAME, ifname) +
 		__nlinline_add_attr(NULL, IFLA_INFO_KIND, type) +
 		((ifindex == -1) ? __nlinline_add_attr(NULL, IFLA_NEW_IFINDEX, "") : 0) +
-		__nlinline_add_attr(NULL, IFLA_INFO_DATA, data);
+		__nlinline_add_attr(NULL, IFLA_INFO_SLAVE_KIND, data);
 	unsigned char msgbuf[msglen];
 	unsigned char *rawmsg = msgbuf;
 	struct {
@@ -443,7 +443,7 @@ static inline int __nlinline_iplink_add(__PLUSARG const char *ifname, unsigned i
 	rawmsg += sizeof(*info);
 	info->nla_type = IFLA_LINKINFO;
   rawmsg += __nlinline_add_attr(rawmsg, IFLA_INFO_KIND, type);
-  rawmsg += __nlinline_add_attr(rawmsg, IFLA_INFO_DATA, data);
+  rawmsg += __nlinline_add_attr(rawmsg, IFLA_INFO_SLAVE_KIND, data);
 	info->nla_len = rawmsg - (unsigned char *)info;
 	return __nlinline_nldialog(__PLUS &msgbuf);
 }
