@@ -49,6 +49,9 @@ static inline int nlinline_iproute_del(int family, void *dst_addr, int dst_prefi
 static inline int nlinline_iplink_add(const char *ifname, unsigned int ifindex, const char *type, const char *data);
 static inline int nlinline_iplink_del(const char *ifname, unsigned int ifindex);
 
+static inline int nl_addrdata2prefix(unsigned char prefixlen, unsigned char flags, unsigned char scope);
+static inline int nl_routedata2prefix(unsigned char prefixlen, unsigned char type, unsigned char scope);
+
 #ifndef __NLINLINE_PLUSTYPE
 #define __PLUSARG
 #define __PLUSF
@@ -82,6 +85,16 @@ static inline int nlinline_family2addrlen(int family) {
 		default: return 0;
 		__default: return 0;
 	}
+}
+
+#define NLINLINE_ADDRDATA2PREFIX_MAGIC 0x70
+#define NLINLINE_ROUTEDATA2PREFIX_MAGIC 0x60
+static inline int nl_addrdata2prefix(unsigned char prefixlen, unsigned char flags, unsigned char scope) {
+	return NLINLINE_ADDRDATA2PREFIX_MAGIC << 24 | flags << 16 | scope << 8 | prefixlen;
+}
+
+static inline int nl_routedata2prefix(unsigned char prefixlen, unsigned char type, unsigned char scope) {
+	return NLINLINE_ROUTEDATA2PREFIX_MAGIC << 24 | type << 16 | scope << 8 | prefixlen;
 }
 
 static inline int __nlinline_geterror(__PLUSARG int fd) {
@@ -301,6 +314,10 @@ static inline int __nlinline_ipaddr(__PLUSARG
 			.i.ifa_prefixlen = prefixlen,
 			.i.ifa_scope = RT_SCOPE_UNIVERSE,
 			.i.ifa_index = ifindex};
+		if (prefixlen >> 24 == NLINLINE_ADDRDATA2PREFIX_MAGIC) {
+			msg.i.ifa_scope = prefixlen >> 8;
+			msg.i.ifa_flags = prefixlen >> 16;
+		}
 		if (addrlen == 4) {
 			msg.a4[0].h.nla_len = msg.a4[1].h.nla_len = sizeof(struct nlattr) + addrlen;
 			msg.a4[0].h.nla_type = IFA_LOCAL;
@@ -359,6 +376,10 @@ static inline int __nlinline_iproute(__PLUSARG
 			.oif.h.nla_len = sizeof(msg.oif),
 			.oif.value = ifindex,
 		};
+		if (dst_prefixlen >> 24 == NLINLINE_ROUTEDATA2PREFIX_MAGIC) {
+			msg.r.rtm_scope = dst_prefixlen >> 8;
+			msg.r.rtm_type = dst_prefixlen >> 16;
+		}
 		int nattr = 0;
     if (addrlen == 4) {
 			if (dst_prefixlen > 0) {
@@ -367,10 +388,12 @@ static inline int __nlinline_iproute(__PLUSARG
 				msg.a4[nattr].addr = *((struct __nlinline_ipv4addr *)dst_addr);
 				nattr++;
 			}
-			msg.a4[nattr].h.nla_len = sizeof(msg.a4[0]);
-			msg.a4[nattr].h.nla_type = RTA_GATEWAY;
-			msg.a4[nattr].addr = *((struct __nlinline_ipv4addr *)gw_addr);
-			nattr++;
+			if (gw_addr != NULL) {
+				msg.a4[nattr].h.nla_len = sizeof(msg.a4[0]);
+				msg.a4[nattr].h.nla_type = RTA_GATEWAY;
+				msg.a4[nattr].addr = *((struct __nlinline_ipv4addr *)gw_addr);
+				nattr++;
+			}
 			msg.h.nlmsg_len += nattr * sizeof(msg.a4[0]);
     } else {
 			if (dst_prefixlen > 0) {
@@ -379,10 +402,12 @@ static inline int __nlinline_iproute(__PLUSARG
 				msg.a6[nattr].addr = *((struct __nlinline_ipv6addr *)dst_addr);
 				nattr++;
 			}
-			msg.a6[nattr].h.nla_len = sizeof(msg.a6[0]);
-			msg.a6[nattr].h.nla_type = RTA_GATEWAY;
-			msg.a6[nattr].addr = *((struct __nlinline_ipv6addr *)gw_addr);
-			nattr++;
+			if (gw_addr != NULL) {
+				msg.a6[nattr].h.nla_len = sizeof(msg.a6[0]);
+				msg.a6[nattr].h.nla_type = RTA_GATEWAY;
+				msg.a6[nattr].addr = *((struct __nlinline_ipv6addr *)gw_addr);
+				nattr++;
+			}
 			msg.h.nlmsg_len += nattr * sizeof(msg.a6[0]);
 		}
 		return __nlinline_nldialog(__PLUS &msg);
