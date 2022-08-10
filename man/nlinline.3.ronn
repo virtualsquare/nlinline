@@ -27,7 +27,7 @@
 
 ## NAME
 
-nlinline_if_nametoindex, nlinline_linksetupdown, nlinline_ipaddr_add, nlinline_ipaddr_del, nlinline_iproute_add, nlinline_iproute_del, nlinline_iplink_add, nlinline_iplink_del, nlinline_linksetaddr, nlinline_linkgetaddr - configure network interfaces
+nlinline_if_nametoindex, nlinline_linksetupdown, nlinline_ipaddr_add, nlinline_ipaddr_del, nlinline_iproute_add, nlinline_iproute_del, nlinline_iplink_add, nlinline_iplink_del, nlinline_linksetaddr, nlinline_linkgetaddr, nl_addrdata2prefix, nl_routedata2prefix - configure network interfaces
 
 ## SYNOPSIS
 `#include <nlinline.h>`
@@ -53,6 +53,10 @@ nlinline_if_nametoindex, nlinline_linksetupdown, nlinline_ipaddr_add, nlinline_i
 `int nlinline_linkgetaddr(unsigned int ` _ifindex_`, void *`_macaddr_`);`
 
 `int nlinline_linksetmtu(unsigned int ` _ifindex_`, unsigned int ` _mtu_`);`
+
+`int nl_addrdata2prefix(unsigned char ` _prefixlen_`, unsigned char ` _flags_`, unsigned char ` _scope_`);`
+
+`int nl_routedata2prefix(unsigned char ` _prefixlen_`, unsigned char ` _type_`, unsigned char ` _scope_`);`
 
 ## DESCRIPTION
 
@@ -90,6 +94,12 @@ NLINLINE (netlink inline) is a *library* of inline functions providing C program
 
   * `nlinline_linksetmtu`:
     This functions sets the MTU (Maximum Transfer Unit) of the interface _ifindex_.
+
+  * `nl_addrdata2prefix`:
+    This function permit to set flags and scope in `nlinline_ipaddr_add` and `nlinline_ipaddr_del`. The values of `prefixlen`, `flags` and `scope` are packed in a single int, the return value of `nl_addrdata2prefix` must be passed to `nlinline_ipaddr_add` or `nlinline_ipaddr_del` as the `prefixlen` parameter.
+
+  * `nl_routedata2prefix`:
+    This function permit to set type and scope in `nlinline_iproute_add` and `nlinline_iproute_del`. The values of `prefixlen`, `type` and `scope` are packed in a single int, the return value of `nl_routedata2prefix` must be passed to `nlinline_iproute_add` or `nlinline_iproute_del` as the `prefixlen` parameter.
 
 IP addresses are `void *` arguments, any sequence of 4 or 16 bytes (in network byte order) is a legal IPv4 or IPv6 address respectively.
 

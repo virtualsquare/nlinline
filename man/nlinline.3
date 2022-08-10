@@ -20,11 +20,11 @@
 .\" Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston,
 .\" MA 02110-1301 USA.
 .\"
-.\" generated with Ronn-NG/v0.10.0
-.\" http://github.com/apjanke/ronn-ng/tree/0.10.0-SNAPSHOT
-.TH "NLINLINE" "3" "December 2020" "VirtualSquare"
+.\" generated with Ronn-NG/v0.10.1
+.\" http://github.com/apjanke/ronn-ng/tree/0.10.1.pre1
+.TH "NLINLINE" "3" "August 2022" "VirtualSquare"
 .SH "NAME"
-nlinline_if_nametoindex, nlinline_linksetupdown, nlinline_ipaddr_add, nlinline_ipaddr_del, nlinline_iproute_add, nlinline_iproute_del, nlinline_iplink_add, nlinline_iplink_del, nlinline_linksetaddr, nlinline_linkgetaddr \- configure network interfaces
+nlinline_if_nametoindex, nlinline_linksetupdown, nlinline_ipaddr_add, nlinline_ipaddr_del, nlinline_iproute_add, nlinline_iproute_del, nlinline_iplink_add, nlinline_iplink_del, nlinline_linksetaddr, nlinline_linkgetaddr, nl_addrdata2prefix, nl_routedata2prefix \- configure network interfaces
 .SH "SYNOPSIS"
 \fB#include <nlinline\.h>\fR
 .P
@@ -49,6 +49,10 @@ nlinline_if_nametoindex, nlinline_linksetupdown, nlinline_ipaddr_add, nlinline_i
 \fBint nlinline_linkgetaddr(unsigned int\fR \fIifindex\fR\fB, void *\fR\fImacaddr\fR\fB);\fR
 .P
 \fBint nlinline_linksetmtu(unsigned int\fR \fIifindex\fR\fB, unsigned int\fR \fImtu\fR\fB);\fR
+.P
+\fBint nl_addrdata2prefix(unsigned char\fR \fIprefixlen\fR\fB, unsigned char\fR \fIflags\fR\fB, unsigned char\fR \fIscope\fR\fB);\fR
+.P
+\fBint nl_routedata2prefix(unsigned char\fR \fIprefixlen\fR\fB, unsigned char\fR \fItype\fR\fB, unsigned char\fR \fIscope\fR\fB);\fR
 .SH "DESCRIPTION"
 NLINLINE (netlink inline) is a \fIlibrary\fR of inline functions providing C programmers with very handy functions to configure network stacks\. NLINLINE is entirely implemented in a header file, nlinline\.h\.
 .TP
@@ -84,6 +88,12 @@ This functions gets the mac address of the interface \fIifindex\fR\.
 .TP
 \fBnlinline_linksetmtu\fR
 This functions sets the MTU (Maximum Transfer Unit) of the interface \fIifindex\fR\.
+.TP
+\fBnl_addrdata2prefix\fR
+This function permit to set flags and scope in \fBnlinline_ipaddr_add\fR and \fBnlinline_ipaddr_del\fR\. The values of \fBprefixlen\fR, \fBflags\fR and \fBscope\fR are packed in a single int, the return value of \fBnl_addrdata2prefix\fR must be passed to \fBnlinline_ipaddr_add\fR or \fBnlinline_ipaddr_del\fR as the \fBprefixlen\fR parameter\.
+.TP
+\fBnl_routedata2prefix\fR
+This function permit to set type and scope in \fBnlinline_iproute_add\fR and \fBnlinline_iproute_del\fR\. The values of \fBprefixlen\fR, \fBtype\fR and \fBscope\fR are packed in a single int, the return value of \fBnl_routedata2prefix\fR must be passed to \fBnlinline_iproute_add\fR or \fBnlinline_iproute_del\fR as the \fBprefixlen\fR parameter\.
 .P
 IP addresses are \fBvoid *\fR arguments, any sequence of 4 or 16 bytes (in network byte order) is a legal IPv4 or IPv6 address respectively\.
 .P

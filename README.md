@@ -63,9 +63,9 @@ int main(int argc, char *argv[]) {
   if (nlinline_ipaddr_add(AF_INET, ipv4addr, 24, ifindex) < 0)
     perror("addr ipv4");
   if (nlinline_iproute_add(AF_INET, NULL, 0, ipv4gw, 0) < 0)
-    perror("addr ipv6");
-  if (nlinline_ipaddr_add(AF_INET6, ipv6addr, 64, ifindex) < 0)
     perror("route ipv4");
+  if (nlinline_ipaddr_add(AF_INET6, ipv6addr, 64, ifindex) < 0)
+    perror("addr ipv6");
   if (nlinline_iproute_add(AF_INET6, NULL, 0, ipv6gw, 0) < 0)
     perror("route ipv6");
   return 0;
@@ -74,6 +74,22 @@ int main(int argc, char *argv[]) {
 
 This program takes the name of an interface from the command line. It turns that interface up and
 sets the interface IPv4 and IPv6 addresses and default routes.
+
+### data2prefix: add more args to ipaddr and iproute
+
+```
+static inline int nl_addrdata2prefix(unsigned char prefixlen, unsigned char flags, unsigned char scope);
+static inline int nl_routedata2prefix(unsigned char prefixlen, unsigned char type, unsigned char scope);
+```
+
+These functions permit to add more configuration flags and parameters to `nlinline_ipaddr*` and `nlinline_iproute*`.
+The output of these functions should be used as the prefix arg in `nlinline_ipaddr*` and `nlinline_iproute*`.
+
+For example the line to set the IPv6 address in the example above can be change as follows to disable the DAD protocol:
+```
+  if (nlinline_ipaddr_add(AF_INET6, ipv6addr, nl_addrdata2prefix(64, IFA_F_NODAD, RT_SCOPE_UNIVERSE), ifindex) < 0)
+    perror("addr ipv6");
+```
 
 ## nlinline extended to user-mode stacks: nlinline+
 
@@ -142,9 +158,9 @@ int main(int argc, char *argv[]) {
   if (vde_ipaddr_add(stack, AF_INET, ipv4addr, 24, ifindex) < 0)
     perror("addr ipv4");
   if (vde_iproute_add(stack, AF_INET, NULL, 0, ipv4gw) < 0)
-    perror("addr ipv6");
-  if (vde_ipaddr_add(stack, AF_INET6, ipv6addr, 64, ifindex) < 0)
     perror("route ipv4");
+  if (vde_ipaddr_add(stack, AF_INET6, ipv6addr, 64, ifindex) < 0)
+    perror("addr ipv6");
   if (vde_iproute_add(stack, AF_INET6, NULL, 0, ipv6gw, 0) < 0)
     perror("route ipv6");
 
