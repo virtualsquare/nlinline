@@ -7,7 +7,7 @@ NLinline provides the following functions:
 
 * `nlinline_if_nametoindex(const char *ifname);` return the index of the network interface whose name is `ifname`
 
-* `int nlinline_iplink_add(const char *ifname, unsigned int ifindex, const char *type, const char *data);` add a (virtual) link
+* `int nlinline_iplink_add(const char *ifname, unsigned int ifindex, const char *type, struct nl_iplink_data *ifd, int nifd);` add a (virtual) link
 
 * `int nlinline_iplink_del(const char *ifname, unsigned int ifindex);` remove a link
 

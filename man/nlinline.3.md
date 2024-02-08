@@ -42,7 +42,7 @@ nlinline_if_nametoindex, nlinline_linksetupdown, nlinline_ipaddr_add, nlinline_i
 
 `int nlinline_iproute_del(int ` _family_`, void *`_dst_addr_`, int ` _dst_prefixlen_`, void *`_gw_addr_`, unsigned int ` _ifindex_`);`
 
-`int nlinline_iplink_add(const char *`_ifname_`, unsigned int ` _ifindex_`, const char *`_type_`, const char *`_data_`);`
+`int nlinline_iplink_add(const char *`_ifname_`, unsigned int ` _ifindex_`, const char *`_type_`, struct nl_iplink_data *`ifd`, int ` nifd`);`
 
 `int nlinline_iplink_del(const char *`_ifname_`, unsigned int ` _ifindex_`);`
 
@@ -79,7 +79,7 @@ NLINLINE (netlink inline) is a *library* of inline functions providing C program
 : This function removes the static route to _dst_addr_/_dst_prefixlen_ network through the gateway _gw_addr_.
 
   `nlinline_iplink_add`
-: This function adds a new link of type _type_, named _ifname_. The value of _data_ depends on the type of link and can be NULL. A default interface name is assigned if _name_ == `NULL`. The link is created with a given index when _ifindex_ is positive.
+: This function adds a new link of type _type_, named _ifname_. The _ifd_ array provides the type specific interface data and can be NULL. The caller should specify the number of items in the _ifd_ array in _nifd_, A default interface name is assigned if _name_ == `NULL`. The link is created with a given index when _ifindex_ is positive.
 
   `nlinline_iplink_del`
 : This function removes a link. The link to be deleted can be identified by its name (_ifname_) or by its index (_ifindex_). Either _ifindex_ can be zero or _ifname_ can be `NULL`. It is possible to use both _ifindex_ and _ifname_ to identify the link. An error may occur if the parameters are inconsistent.
@@ -101,7 +101,7 @@ NLINLINE (netlink inline) is a *library* of inline functions providing C program
 
 IP addresses are `void *` arguments, any sequence of 4 or 16 bytes (in network byte order) is a legal IPv4 or IPv6 address respectively.
 
-`nlinline` functions do not add dependencies at run-time. This is useful for security critical applications 
+`nlinline` functions do not add dependencies at run-time. This is useful for security critical applications
 (like PAM modules)
 These inline functions use netlink only, they do not depend on the obsolete netdevice (ioctl) API.
 Only the code of referenced inline functions enters in the object and executable code.

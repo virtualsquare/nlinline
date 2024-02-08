@@ -46,7 +46,16 @@ static inline int nlinline_ipaddr_del(int family, void *addr, int prefixlen, uns
 static inline int nlinline_iproute_add(int family, void *dst_addr, int dst_prefixlen, void *gw_addr, unsigned int ifindex);
 static inline int nlinline_iproute_del(int family, void *dst_addr, int dst_prefixlen, void *gw_addr, unsigned int ifindex);
 
-static inline int nlinline_iplink_add(const char *ifname, unsigned int ifindex, const char *type, const char *data);
+struct nl_iplink_data {
+	int tag;
+	int len;
+	const void *data;
+};
+
+#define nl_iplink_strdata(t,s) &(struct nl_iplink_data) {(t), strlen(s) + 1, (s)}, 1
+
+static inline int nlinline_iplink_add(const char *ifname, unsigned int ifindex, const char *type,
+		struct nl_iplink_data *ifd, int nifd);
 static inline int nlinline_iplink_del(const char *ifname, unsigned int ifindex);
 
 static inline int nl_addrdata2prefix(unsigned char prefixlen, unsigned char flags, unsigned char scope);
@@ -426,34 +435,42 @@ static inline int __nlinline_iproute_del(__PLUSARG
 			RTM_DELROUTE, 0, family, dst_addr, dst_prefixlen, gw_addr, ifindex);
 }
 
-static inline int __nlinline_add_attr(void *buf, unsigned int type, const char *s) {
-  if (s) {
-    int payloadlen = strlen(s) + 1;
-    int attrlen = sizeof(struct nlattr) + payloadlen;
-    if (buf) {
-      struct nlattr *attr = buf;
-      attr->nla_len = attrlen;
-      attr->nla_type = type;
-      snprintf((char *)(attr + 1), payloadlen, "%s", s);
-    }
-    return (attrlen + 3) & ~3;
-  } else
-    return 0;
+static inline int __nlinline_add_attr(void *buf, unsigned int type, const void *data, int datalen) {
+	int attrlen = sizeof(struct nlattr) + datalen;
+	if (buf) {
+		struct nlattr *attr = buf;
+		attr->nla_len = attrlen;
+		attr->nla_type = type;
+		memcpy(attr + 1, data, datalen);
+	}
+	return (attrlen + 3) & ~3;
 }
 
-static inline int __nlinline_iplink_add(__PLUSARG const char *ifname, unsigned int ifindex, const char *type, const char *data) {
+static inline int __nlinline_add_strattr(void *buf, unsigned int type, const char *s) {
+	if (s)
+		return __nlinline_add_attr(buf, type, s, strlen(s) + 1);
+	else
+		return 0;
+}
+
+#define IFLA_VDE_VNL 1
+
+/* [IFLA_IFNAME...] [IFLA_NEW_IFINDEX ""] [IFLA_LINKINFO [IFLA_INFO_KIND ...] [IFLA_INFO_DATA [..ifd.. */
+static inline int __nlinline_iplink_add(__PLUSARG const char *ifname, unsigned int ifindex, const char *type, struct nl_iplink_data *ifd, int nifd) {
 	int msglen = sizeof(struct nlmsghdr) + sizeof(struct ifinfomsg) + sizeof(struct nlattr) +
-		__nlinline_add_attr(NULL, IFLA_IFNAME, ifname) +
-		__nlinline_add_attr(NULL, IFLA_INFO_KIND, type) +
-		((ifindex == -1) ? __nlinline_add_attr(NULL, IFLA_NEW_IFINDEX, "") : 0) +
-		__nlinline_add_attr(NULL, IFLA_INFO_SLAVE_KIND, data);
+		(ifname ? __nlinline_add_strattr(NULL, IFLA_IFNAME, ifname) : 0) +
+		__nlinline_add_strattr(NULL, IFLA_INFO_KIND, type) +
+		((ifindex == -1) ? __nlinline_add_strattr(NULL, IFLA_NEW_IFINDEX, "") : 0) +
+		(nifd > 0 ? sizeof(struct nlattr) : 0);
+	for (int i = 0; i < nifd; i++)
+		msglen += __nlinline_add_attr(NULL, ifd[i].tag, ifd[i].data, ifd[i].len);
 	unsigned char msgbuf[msglen];
 	unsigned char *rawmsg = msgbuf;
 	struct {
-    struct nlmsghdr h;
-    struct ifinfomsg i;
+		struct nlmsghdr h;
+		struct ifinfomsg i;
 	} *msg = (void *) rawmsg;
-	struct nlattr *info;
+	struct nlattr *infohdr;
 	memset(msgbuf, 0, msglen);
 	msg->h.nlmsg_len = msglen;
 	msg->h.nlmsg_type = RTM_NEWLINK;
@@ -461,15 +478,23 @@ static inline int __nlinline_iplink_add(__PLUSARG const char *ifname, unsigned i
 	msg->h.nlmsg_seq = 1;
 	msg->i.ifi_index = ifindex == -1 ? 0 : ifindex;
 	rawmsg += sizeof(*msg);
-	rawmsg += __nlinline_add_attr(rawmsg, IFLA_IFNAME, ifname);
+	if (ifname)
+		rawmsg += __nlinline_add_strattr(rawmsg, IFLA_IFNAME, ifname);
 	if (ifindex == -1)
-		rawmsg += __nlinline_add_attr(rawmsg, IFLA_NEW_IFINDEX, "");
-	info = (void *) rawmsg;
-	rawmsg += sizeof(*info);
-	info->nla_type = IFLA_LINKINFO;
-  rawmsg += __nlinline_add_attr(rawmsg, IFLA_INFO_KIND, type);
-  rawmsg += __nlinline_add_attr(rawmsg, IFLA_INFO_SLAVE_KIND, data);
-	info->nla_len = rawmsg - (unsigned char *)info;
+		rawmsg += __nlinline_add_strattr(rawmsg, IFLA_NEW_IFINDEX, "");
+	infohdr = (void *) rawmsg;
+	rawmsg += sizeof(*infohdr);
+	infohdr->nla_type = IFLA_LINKINFO;
+	rawmsg += __nlinline_add_strattr(rawmsg, IFLA_INFO_KIND, type);
+	if (nifd > 0) {
+		struct nlattr *datahdr = (void *) rawmsg;
+		rawmsg += sizeof(*datahdr);
+		datahdr->nla_type = IFLA_INFO_DATA;
+		for (int i = 0; i < nifd; i++)
+			rawmsg += __nlinline_add_attr(rawmsg, ifd[i].tag, ifd[i].data, ifd[i].len);
+		datahdr->nla_len = rawmsg - (unsigned char *)datahdr;
+	}
+	infohdr->nla_len = rawmsg - (unsigned char *)infohdr;
 	return __nlinline_nldialog(__PLUS &msgbuf);
 }
 
