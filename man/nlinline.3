@@ -30,7 +30,7 @@ nlinline_iplink_add, nlinline_iplink_del, nlinline_linksetaddr,
 nlinline_linkgetaddr, nl_addrdata2prefix, nl_routedata2prefix \-
 configure network interfaces
 .SH SYNOPSIS
-\f[CB]#include *nlinline.h*\f[R]
+\f[CB]#include <nlinline.h>\f[R]
 .PP
 \f[CB]int nlinline_if_nametoindex(const char *\f[R]\f[I]ifname\f[R]\f[CB]);\f[R]
 .PP
@@ -190,10 +190,10 @@ stack supports this feature.)
 .SH EXAMPLE
 .IP
 .EX
-#include *stdio.h*
-#include *stdlib.h*
-#include *stdint.h*
-#include *nlinline.h*
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <nlinline.h>
 
 int main(int argc, char *argv[]) {
   uint8_t ipv4addr[] = {192,168,2,2};

@@ -28,7 +28,7 @@
 nlinline_if_nametoindex, nlinline_linksetupdown, nlinline_ipaddr_add, nlinline_ipaddr_del, nlinline_iproute_add, nlinline_iproute_del, nlinline_iplink_add, nlinline_iplink_del, nlinline_linksetaddr, nlinline_linkgetaddr, nl_addrdata2prefix, nl_routedata2prefix - configure network interfaces
 
 # SYNOPSIS
-`#include *nlinline.h*`
+`#include <nlinline.h>`
 
 `int nlinline_if_nametoindex(const char *`_ifname_`);`
 
@@ -116,10 +116,10 @@ All the other functions return zero in case of success. On error, -1 is returned
 
 # EXAMPLE
 ```C
-#include *stdio.h*
-#include *stdlib.h*
-#include *stdint.h*
-#include *nlinline.h*
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <nlinline.h>
 
 int main(int argc, char *argv[]) {
   uint8_t ipv4addr[] = {192,168,2,2};
