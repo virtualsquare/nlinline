@@ -94,10 +94,10 @@ NLINLINE (netlink inline) is a *library* of inline functions providing C program
 : This functions sets the MTU (Maximum Transfer Unit) of the interface _ifindex_.
 
   `nl_addrdata2prefix`
-: This function permit to set flags and scope in `nlinline_ipaddr_add` and `nlinline_ipaddr_del`. The values of `prefixlen`, `flags` and `scope` are packed in a single int, the return value of `nl_addrdata2prefix` must be passed to `nlinline_ipaddr_add` or `nlinline_ipaddr_del` as the `prefixlen` parameter.
+: This function allows you to set flags and scope in `nlinline_ipaddr_add` and `nlinline_ipaddr_del`. The values of `prefixlen`, `flags` and `scope` are packed in a single int, the return value of `nl_addrdata2prefix` must be passed to `nlinline_ipaddr_add` or `nlinline_ipaddr_del` as the `prefixlen` parameter.
 
   `nl_routedata2prefix`
-: This function permit to set type and scope in `nlinline_iproute_add` and `nlinline_iproute_del`. The values of `prefixlen`, `type` and `scope` are packed in a single int, the return value of `nl_routedata2prefix` must be passed to `nlinline_iproute_add` or `nlinline_iproute_del` as the `prefixlen` parameter.
+: This function allows you to set type and scope in `nlinline_iproute_add` and `nlinline_iproute_del`. The values of `prefixlen`, `type` and `scope` are packed in a single int, the return value of `nl_routedata2prefix` must be passed to `nlinline_iproute_add` or `nlinline_iproute_del` as the `prefixlen` parameter.
 
 IP addresses are `void *` arguments, any sequence of 4 or 16 bytes (in network byte order) is a legal IPv4 or IPv6 address respectively.
 

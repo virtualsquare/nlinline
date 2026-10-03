@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.25)
 project(nlinline 
 		VERSION 0.2.2
     DESCRIPTION "A quick and clean API for networking configuration via NETLINK"
